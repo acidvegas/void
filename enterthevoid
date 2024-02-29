@@ -1,0 +1,223 @@
+#!/bin/bash
+# enter the void - developed by acidvegas (https://git.acid.vegas/void)
+
+set -xev
+
+# Configuration
+ARCH=x86_64 # x86_64 or x86_64-musl
+CPU=intel # amd or intel
+DRIVE=/dev/sdb # can be a single drive or an array if using raidz with zfs
+HOSTNAME=blackhole
+SWAP_SIZE=4 # In GB (set to 0 to disable)
+ROOT_FS=btrfs # btrfs or ext4
+TIMEZONE=America/New_York
+USERNAME=acidvegas
+WIFI_SSID= # Leave blank if you don't want to use wifi
+WIFI_PASS=
+WIFI_DEV=wlan0
+
+if [ -d /sys/firmware/efi ]; then
+	BOOT_OPTION=UEFI
+else
+	BOOT_OPTION=BIOS
+fi
+
+
+check_config() {
+	if [ ! $ARCH = "x86_64" ] && [ ! $ARCH = "x86_64-musl" ]; then
+		printf "invalid ARCH\n" && exit 1
+	elif [ ! $CPU = "amd" ] && [ ! $CPU = "intel" ]; then
+		printf "invalid CPU\n" && exit 1
+	elif [ ! -b $DRIVE ]; then
+		printf "invalid DRIVE\n" && exit 1
+	elif [ -z $HOSTNAME ]; then
+		printf "invalid HOSTNAME\n" && exit 1
+	elif ! [ "$SWAP_SIZE" -eq "$SWAP_SIZE" ] 2>/dev/null; then
+		printf "invalid SWAP_SIZE\n" && exit 1
+	elif [ ! $ROOT_FS = "btrfs" ] && [ ! $ROOT_FS = "ext4" ] && [ ! $ROOT_FS = "zfs" ]; then
+		printf "invalid ROOT_FS\n" && exit 1
+	elif [ ! -f /usr/share/zoneinfo/$TIMEZONE ]; then
+		printf "invalid TIMEZONE\n" && exit 1
+	elif [ -z $USERNAME ]; then
+		printf "invalid USERNAME\n" && exit 1
+	elif [ ! -z $WIFI_SSID ]; then
+		if [ -z $(ip addr | grep '^[0-9]:' | awk '{print $2}' | tr -d ':' | grep $WIFI_DEV) ]; then
+			printf "invalid WIFI_DEV\n" && exit 1
+		fi
+	fi
+}
+
+
+setup_network() {
+	if [ ! -z "$WIFI_SSID" ]; then
+		if rfkill list wifi | grep -q 'Soft blocked: yes\|Hard blocked: yes'; then
+			printf "Wifi is blocked, attempting to unblock... (make sure to handle this after reboot)\n"
+			rfkill unblock wifi
+		fi
+		wpa_passphrase "$WIFI_SSID" "$WIFI_PASS" | wpa_supplicant -i $WIFI_DEV -c /dev/stdin
+	fi
+}
+
+
+setup_partition() {
+	xbps-install -u xbps
+	xbps-install -Su
+	xbps-install parted
+
+	wipefs -a $DRIVE
+	if [ $BOOT_OPTION = "UEFI" ]; then
+		parted $DRIVE --script mklabel gpt
+		parted $DRIVE --script mkpart primary fat32 1MiB 513MiB
+		parted $DRIVE --script set 1 esp on
+		parted $DRIVE --script mkpart primary $ROOT_FS 513MiB 100%
+		partprobe $DRIVE
+		mkfs.vfat ${DRIVE}1
+		if [ $ROOT_FS = "btrfs" ]; then
+			mkfs.btrfs -f ${DRIVE}2
+			mount ${DRIVE}2 /mnt
+			btrfs subvolume create /mnt/@
+			btrfs subvolume create /mnt/@home
+			btrfs subvolume create /mnt/@snapshots
+			umount /mnt
+			mount -o subvol=@ ${DRIVE}2 /mnt
+			mkdir -p /mnt/{home,snapshots}
+			mount -o subvol=@home ${DRIVE}2 /mnt/home
+			mount -o subvol=@snapshots ${DRIVE}2 /mnt/snapshots
+		elif [ $ROOT_FS = "ext4" ]; then
+			mkfs.ext4 ${DRIVE}2
+			mount ${DRIVE}2 /mnt
+		fi
+		mkdir -p /mnt/boot/efi
+		mount ${DRIVE}1 /mnt/boot/efi
+	elif [ $BOOT_OPTION = "BIOS" ]; then
+		parted $DRIVE --script mklabel msdos
+		parted $DRIVE --script mkpart primary $ROOT_FS 1MiB 100%
+		parted $DRIVE --script set 1 boot on
+		partprobe $DRIVE
+		if [ $ROOT_FS = "btrfs" ]; then
+			mkfs.btrfs -f ${DRIVE}1
+			mount ${DRIVE}1 /mnt
+			btrfs subvolume create /mnt/@
+			btrfs subvolume create /mnt/@home
+			btrfs subvolume create /mnt/@snapshots
+			umount /mnt
+			mount -o subvol=@ ${DRIVE}1 /mnt
+			mkdir -p /mnt/{home,snapshots}
+			mount -o subvol=@home ${DRIVE}1 /mnt/home
+			mount -o subvol=@snapshots ${DRIVE}1 /mnt/snapshots
+		elif [ $ROOT_FS = "ext4" ]; then
+			mkfs.ext4 ${DRIVE}1
+			mount ${DRIVE}1 /mnt
+		fi
+	fi
+}
+
+
+setup_install() {
+	REPO=https://repo-default.voidlinux.org/current
+	if [ $ARCH = 'x86_64-musl' ]; then
+		REPO=$REPO/musl
+	fi
+
+	mkdir -p /mnt/var/db/xbps/keys
+	cp /var/db/xbps/keys/* /mnt/var/db/xbps/keys/
+
+	XBPS_ARCH=$ARCH xbps-install -S -r /mnt -R "$REPO" base-system linux
+
+	printf "entering chroot...remember to run setup_chroot() inside the chroot!\n"
+	xchroot /mnt /bin/bash
+}
+
+
+setup_chroot() {
+	passwd
+	xbps-install -u xbps
+	xbps-install -Su
+
+	if [ $CPU = "intel" ]; then
+		xbps-install void-repo-nonfree
+		xbps-install -Su
+		xbps-install intel-ucode
+		ln -sf /etc/sv/intel-ucode /etc/runit/runsvdir/default/
+	elif [ $CPU = "amd" ]; then
+		xbps-install linux-firmware-amd
+	fi
+
+	useradd -m -s /bin/bash $USERNAME && passwd $USERNAME && gpasswd -a $USERNAME wheel
+	ln -sf /usr/share/zoneinfo/$TIMEZONE /etc/localtime
+	ln -sf /etc/sv/dhcpcd /etc/runit/runsvdir/default/
+	hwclock --systohc
+	printf "$HOSTNAME\n" > /etc/hostname
+	printf "HOSTNAME=\"$HOSTNAME\"\nHARDWARECLOCK=\"UTC\"\nTIMEZONE=\"$TIMEZONE\"\nKEYMAP=us\n" > /etc/rc.conf
+
+	if [ $ARCH = 'x86_64' ]; then
+		printf "en_US.UTF-8 UTF-8\n" > /etc/default/libc-locales
+		printf "LANG=en_US.UTF-8\n" > /etc/locale.conf
+		xbps-reconfigure -f glibc-locales
+	fi
+
+	if [ $BOOT_OPTION = "UEFI" ]; then
+		if [ $ROOT_FS = "btrfs" ]; then
+			printf "UUID=$(blkid -s UUID -o value ${DRIVE}2) /          $ROOT_FS defaults,noatime,subvol=@  0 1\n"
+			printf "UUID=$(blkid -s UUID -o value ${DRIVE}2) /home      $ROOT_FS defaults,subvol=@home      0 1\n"
+			printf "UUID=$(blkid -s UUID -o value ${DRIVE}2) /snapshots $ROOT_FS defaults,subvol=@snapshots 0 1\n"
+		elif [ $ROOT_FS = "ext4" ]; then
+			printf "UUID=$(blkid -s UUID -o value ${DRIVE}2) / $ROOT_FS defaults,noatime 0 1\n"
+		fi
+		printf "UUID=$(blkid -s UUID -o value ${DRIVE}1) /boot/efi vfat defaults,noatime 0 1\n"
+	elif [ $BOOT_OPTION = "BIOS" ]; then
+		if [ $ROOT_FS = "btrfs" ]; then
+			printf "UUID=$(blkid -s UUID -o value ${DRIVE}1) /          btrfs defaults,noatime,subvol=@  0 1\n"
+			printf "UUID=$(blkid -s UUID -o value ${DRIVE}1) /home      btrfs defaults,subvol=@home      0 1\n"
+			printf "UUID=$(blkid -s UUID -o value ${DRIVE}1) /snapshots btrfs defaults,subvol=@snapshots 0 1\n"
+		elif [ $ROOT_FS = "ext4" ]; then
+			printf "UUID=$(blkid -s UUID -o value ${DRIVE}1) / $ROOT_FS defaults,noatime  0 1\n"
+		fi
+	fi > /etc/fstab
+
+	printf "tmpfs /tmp tmpfs defaults,nosuid,nodev 0 0\n" >> /etc/fstab
+
+	if [ $SWAP_SIZE -gt 0 ]; then
+		touch /swapfile
+		if [ $ROOT_FS = "btrfs" ]; then
+			chattr +C /swapfile
+		fi
+		dd if=/dev/zero of=/swapfile bs=1M count=${SWAP_SIZE}k status=progress
+		chmod 0600 /swapfile
+		mkswap /swapfile
+		swapon /swapfile
+		printf "/swapfile none swap sw 0 0\n" >> /etc/fstab
+	fi
+
+	if [ $BOOT_OPTION = "UEFI" ]; then
+		xbps-install gummiboot
+		gummiboot install
+		nano /boot/loader/void-options.conf
+		xbps-reconfigure -f linux$(unamer -r)
+		# Optional, copy the EFI /boot/efi/EFI/boot/bootx64.efi to for tricking compatability
+	elif [ $BOOT_OPTION = "BIOS" ]; then
+		xbps-install grub
+		grub-install /dev/$DRIVE
+	fi
+
+	xbps-reconfigure -fa
+	exit
+}
+
+
+
+if [ "$#" -ne 1 ]; then
+	printf "usage: $0 [install|partition|chroot|final]\n"
+	exit 1
+fi
+
+check_config
+
+case "$1" in
+    network)   setup_network ;;
+    partition) setup_partition ;;
+    install)   setup_install ;;
+    chroot)    setup_chroot ;;
+    final)     umount -R /mnt; reboot ;;
+    *)         printf "usage: $0 [install|partition|chroot|final]\n"; exit 1 ;;
+esac

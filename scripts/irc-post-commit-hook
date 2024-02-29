@@ -1,0 +1,26 @@
+#!/bin/sh
+# irc post-commit hook - developed by acidvegas (https://git.acid.vegas/void)
+
+# Place this file in .git/hooks/post-commit and chmod +x
+
+# Configuration
+WEECHAT_NETWORK="irc.supernets.org"
+WEECHAT_CHANNEL="#dev"
+WEECHAT_FIFO="/home/acidvegas/.local/share/weechat/weechat_fifo"
+SSH_SERVER="war"
+
+# Get commit data for the message
+_data=$(git log -1 --graph --pretty=format:"%h|%s|%cn")
+_hash=$(echo "$_data" | cut -d'|' -f1 | cut -c 3-)
+_msg=$(echo "$_data" | cut -d'|' -f2)
+_name=$(echo "$_data" | cut -d'|' -f3)
+#_name=$(basename $(dirname $(git rev-parse --show-toplevel))) # For locally parsing organization names
+_repo=$(basename -s .git $(git config --get remote.origin.url))
+_summary=$(git show $_hash --stat | grep -E "fil(e|es) changed" | awk '{files+=$1; inserted+=$4; deleted+=$6} END {printf "%s|+%s|-%s", files, inserted, deleted }')
+_files=$(echo $_summary | cut -d'|' -f1)
+_inserts=$(echo $_summary | cut -d'|' -f2)
+_deletes=$(echo $_summary | cut -d'|' -f3)
+_ircmsg="irc.$WEECHAT_NETWORK.$WEECHAT_CHANNEL *^C14[^C11GitHub^C14]^O Commit pushed to ^C08$_name/$_repo^O (^C06$_hash^O) ^C14[^O$_files^C14|^C03$_inserts^C14|^C04$_deletes^C14]^O : $_msg"
+
+# Send the message to weechat
+echo "$_ircmsg" | ssh $SSH_SERVER tee $WEECHAT_FIFO > /dev/null

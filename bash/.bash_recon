@@ -1,0 +1,59 @@
+#!/bin/sh
+# .bash_recon - developed by acidvegas (https://git.acid.vegas/void)
+
+asn2ranges() {
+	local cache_file="/tmp/.bgp_tools_table_cache"
+	local current_time=$(date +%s)
+	local update_interval=$((2 * 60 * 60)) # 2 hours in seconds
+	if [ -f "$cache_file" ]; then
+		local last_update=$(date -r "$cache_file" +%s)
+		local time_diff=$(($current_time - $last_update))
+		if [ $time_diff -gt $update_interval ]; then
+			curl -A 'acmeco bgp.tools - acid.vegas@acid.vegas' -s https://bgp.tools/table.txt -o "$cache_file"
+		fi
+	else
+		curl -A 'acmeco bgp.tools - acid.vegas@acid.vegas' -s https://bgp.tools/table.txt -o "$cache_file"
+	fi
+	awk -v asn="$1" '$NF == asn {print $1}' "$cache_file"
+}
+
+asn2search() {
+	local search_string="$1"
+	local cache_file="/tmp/.bgp_tools_asn_cache"
+	local current_time=$(date +%s)
+	local update_interval=$((24 * 60 * 60)) # 24 hours in seconds
+	if [ -f "$cache_file" ]; then
+		local last_update=$(date -r "$cache_file" +%s)
+		local time_diff=$(($current_time - $last_update))
+		if [ $time_diff -gt $update_interval ]; then
+			curl -A 'acmeco bgp.tools - acid.vegas@acid.vegas' -s https://bgp.tools/asns.csv -o "$cache_file"
+		fi
+	else
+		curl -A 'acmeco bgp.tools - acid.vegas@acid.vegas' -s https://bgp.tools/asns.csv -o "$cache_file"
+	fi
+	grep -i "$search_string" "$cache_file"
+}
+
+atlastream() {
+	curl -s "https://atlas-stream.ripe.net/stream/?streamType=result&msm=1001" # FOR COWBOYS ONLY
+}
+
+bgplookup() {
+	if [ -f "$1" ]; then
+		{ echo "begin"; echo "verbose"; echo "count"; cat "$1"; echo "end"; } | nc bgp.tools 43
+	else
+		whois -h bgp.tools " -v $1"
+	fi
+}
+
+bgpstream() {
+	curl -s "https://ris-live.ripe.net/v1/stream/?format=json&client=hacktheplnet" # FOR COWBOYS ONLY
+}
+
+crtsh() {
+	curl -s "https://crt.sh/?q=$1&output=json" | jq -r '.[].name_value' | sort | uniq
+}
+
+shidb() {
+	curl https://internetdb.shodan.io/$1
+}

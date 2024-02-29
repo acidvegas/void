@@ -1,0 +1,13 @@
+#!/bin/sh
+# mutag - developed by acidvegas (https://git.acid.vegas/void)
+# removes all metadata & album art from mp3 files and sets the artist and title based on the directory and filename
+# requires: id3v2 python-eyed3
+find $HOME/music -type f | while read SONG; do
+	DIR=$(dirname "$SONG")
+	ARTIST=$(basename "$DIR")
+	TITLE=$(basename "$SONG" .mp3)
+	echo "$DIR | $ARTIST | $TITLE"
+	eyeD3 --remove-all-images "$SONG"
+	id3v2 --delete-all "$SONG"
+	id3v2 --artist "$ARTIST" --song "$TITLE" -2 "$SONG"
+done

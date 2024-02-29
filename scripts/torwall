@@ -1,0 +1,56 @@
+#!/bin/bash
+# tor firewall script - developed by acidvegas (https://git.acid.vegas/void)
+
+# All traffic is routed through Tor.
+# printf "DNSPort 53\nTransPort 9040\nSocksPort 9050\nControlPort 9051\n" > /etc/tor/torrc
+
+
+start_tor() {
+    iptables -t nat -A OUTPUT -o lo -j RETURN
+    iptables -t nat -A OUTPUT -p tcp --syn -j REDIRECT --to-ports 9040
+    iptables -t nat -A OUTPUT -p udp --dport 53 -j REDIRECT --to-ports 9053
+    iptables -t nat -A OUTPUT -p tcp --dport 53 -j REDIRECT --to-ports 9053
+    iptables -A OUTPUT ! -o lo ! -d 127.0.0.1/8 ! -p tcp -j DROP
+	echo "repository=http://lysator7eknrfl47rlyxvgeamrv7ucefgrrlhk7rouv3sna25asetwid.onion/pub/voidlinux/current/musl" > /etc/xbps.d/00-repository-main.conf
+	echo "nameserver 127.0.0.1" > /etc/resolv.conf && chattr +i /etc/resolv.conf
+	export SOCKS_PROXY="socks5://127.0.0.1:9050"
+    echo "All traffic is now routed through Tor."
+}
+
+new_tor() {
+	iptables -F
+	iptables -t nat -F
+
+	# Allow local-only connections
+	iptables -A OUTPUT -o lo -j ACCEPT
+
+	# Allow the tor process to establish connections
+	iptables -A OUTPUT -m owner --uid-owner $(id -u debian-tor) -j ACCEPT
+
+	# Redirect all non-local TCP connections to Tor's TransPort
+	iptables -t nat -A OUTPUT -p tcp --syn -j REDIRECT --to-ports 9040
+
+	# Redirect DNS queries to Tor's DNSPort
+	iptables -t nat -A OUTPUT -p udp --dport 53 -j REDIRECT --to-ports 9053
+	iptables -t nat -A OUTPUT -p tcp --dport 53 -j REDIRECT --to-ports 9053
+
+	# Reject any other outbound traffic
+	iptables -A OUTPUT -j REJECT
+}
+
+stop_tor() {
+    iptables -F
+    iptables -t nat -F
+	echo "repository=https://repo-default.voidlinux.org/current/musl" > /etc/xbps.d/00-repository-main.conf
+	echo "nameserver 1.1.1.1" > /etc/resolv.conf && chattr +i /etc/resolv.conf
+	unset SOCKS_PROXY
+    echo "Tor-only mode is now off."
+}
+
+if [[ $1 == "start" ]]; then
+    start_tor
+elif [[ $1 == "stop" ]]; then
+    stop_tor
+else
+    echo "Usage: $0 [start|stop]"
+fi

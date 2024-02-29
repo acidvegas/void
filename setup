@@ -1,0 +1,163 @@
+#!/bin/sh
+# void setup script - developed by acidvegas (https://git.acid.vegas/void)
+
+# note: After importing keys: printf "FINGERPRINTHERE:6:" | gpg --import-ownertrust
+
+set -xev
+
+# Configuration
+CPU=intel # amd or intel
+DISPLAY_SERVER=xorg # xorg or blank for none
+GFX_DRIVER=intel # amd or intel (leave blank for none)
+REMOTE_PORT=2023 # CHANGE THIS
+
+GIT_URL="https://raw.githubusercontent.com/acidvegas/void/master"
+
+setup_root() {
+	useradd -m -s /bin/bash acidvegas && gpasswd -a acidvegas wheel && passwd acidvegas
+
+	wget -O /usr/share/kbd/consolefonts/ohsnap6x11r.psfu $GIT_URL/font/ohsnap6x11r.psfu
+	wget -O /usr/share/kbd/consolefonts/ohsnap7x12r.psfu $GIT_URL/font/ohsnap7x12r.psfu
+	wget -O /usr/share/kbd/consolefonts/ohsnap7x14r.psfu $GIT_URL/font/ohsnap7x14r.psfu
+
+	printf "\nnohook resolv.conf\n" >> /etc/dhcpcd.conf
+	printf "\nipv4only\nnodhcp6\n" >> /etc/dhcpcd.conf # For fixing "dhcpcd: ipv6nd_sendadvertisement: Operation not permitted" error
+	echo "proc /proc proc defaults,hidepid=2 0 0" >> /etc/fstab && mount -o remount /proc
+	printf "set boldtext\nset minibar\nset nohelp\nset nowrap\nset quickblank\nset tabsize 4\nunbind ^J main\nset selectedcolor black,red\ninclude \"/usr/share/nano/*.nanorc\"\n" > /etc/nanorc
+	printf "\nexport HISTFILE=/dev/null\nexport LESSHISTFILE=/dev/null\nexport PYTHONHISTFILE=/dev/null\n" >> /etc/profile
+	printf "#\!/bin/sh\nclear && (printf \"\" && printf \"   E N T E R   T H E   V O I D\"  && printf \"\") | nms -af red\n" > /etc/profile.d/motd.sh
+	printf "\nFONT=\"ohsnap6x11r\"\n" >> /etc/rc.conf
+	printf "Defaults lecture = always\nDefaults lecture_file = /etc/sudoers.d/sudoers.lecture\nroot ALL=(ALL) ALL\n%%wheel ALL=(ALL) ALL\n" > /etc/sudoers
+	printf "\n\033[1m     \033[32m\"Bee\" careful    \033[34m__\n       \033[32mwith sudo!    \033[34m// \ \n                     \\\\\\_/ \033[33m//\n   \033[35m''-.._.-''-.._.. \033[33m-(||)(')\n                     '''\033[0m\n" > /etc/sudoers.d/sudoers.lecture
+	printf '#!/bin/sh\nexec 2>&1\n[ -r conf ] && . ./conf\nexec dropbear -p CHANGE:ME -w -s -R -F\n' > /etc/sv/dropbear/run
+	printf "\nhsts=0\n" >> /etc/wgetrc
+	
+	ln -sfv /etc/sv/socklog-unix /var/service
+	ln -sfv /etc/sv/nanoklogd /var/service
+	ln -sf /etc/sv/dropbear /var/service/
+}
+
+
+setup_packages() {
+	xbps-install -Suy void-repo-nonfree
+
+	if [ $CPU = "intel" ]; then
+		xbps-install -y intel-ucode
+		xbps-reconfigure -f $(xbps-query -s linux | grep pkgver | cut -d " " -f 2) # Must regenerate initramfs
+	elif [ $CPU = "amd" ]; then
+		xbps-install -y linux-firmware-amd
+	fi
+
+	if [ $DISPLAY_SERVER = "xorg" ]; then
+		if [ $GFX_DRIVER = "intel" ]; then
+			xbps-install -y linux-firmware-intel mesa-dri vulkan-loader mesa-vulkan-intel intel-video-accel
+		fi
+		xbps-install -y xorg libX11-devel libX11 libXft-devel libXft  libXinerama-devel libXinerama libXrandr-devel libXrandr
+		xbps-install -y alacritty dmenu dunst firefox pinentry-dmenu scrot signal-desktop unclutter xclip
+		xbps-install -y ohsnap-font font-unifont-bdf freefont-ttf noto-fonts-ttf noto-fonts-ttf-extra noto-fonts-cjk noto-fonts-emoji
+		xbps-install -y alsa-utils cmus ffmpeg id3v2 eyeD3 youtube-dl # Revamp audio setup at some point
+		xbps-install -y vscode
+	fi
+
+	# Development
+	xbps-install -y checkbashisms gcc go make patch pkg-config python3 python3-pip shellcheck
+
+	# Essentials
+	xbps-install -y curl dropbrear git lxc lxd socklog-void tmux tor tree unzip zip
+	xbps-install -y bandwhich glow gnupg2-scdaemon lazygit oath-toolkit progress rsync tmate
+	xbps-install -y earlyoom && ln -sfv /etc/sv/earlyoom /var/service/
+
+	# Alternatives
+	xbps-install -y bat btop delta exa
+
+	# Recon
+	xbps-install -y masscan termshark
+}
+
+
+setup_configs() {
+	wget -O $HOME/.alacritty.toml $GIT_URL/alacritty/.alacritty.toml
+	wget -O $HOME/.tmux.conf $GIT_URL/tmux/.tmux.conf
+
+	wget -O $HOME/.bashrc $GIT_URL/bash/.bashrc
+	wget -O $HOME/.bash_aliases $GIT_URL/bash/.bash_aliases
+	wget -O $HOME/.bash_functions $GIT_URL/bash/.bash_functions
+	. $HOME/.bashrc # POSIX shell doesn't support source
+
+	mkdir -p $HOME/.config/cmus && wget -O $HOME/.config/cmus/autosave $GIT_URL/cmus/autosave
+	mkdir -p $HOME/.config/dunst && wget -O $HOME/.config/dunst/dunstrc $GIT_URL/dunst/dunstrc
+	wget -O $HOME/.gitconfig $GIT_URL/git/.gitconfig
+	mkdir $HOME/.gnupg && wget -O $HOME/.gnupg/gpg.conf $GIT_URL/gpg/gpg.conf
+
+	if [ $DISPLAY_SERVER = "xorg" ]; then
+		printf "pinentry-program $HOME/.gnupg/pinentry-wrapper\ndefault-cache-ttl 3600\n" > $HOME/.gnupg/gpg-agent.conf
+		printf "if [ \"\$PINENTRY_USER_DATA\" = \"dmenu\" ]; then\n\texec /usr/local/bin/pinentry-dmenu \"$@\"\nelse\n\texec /usr/bin/pinentry-curses \"$@\"\nfi\n" > $HOME/.gnupg/pinentry-wrapper && chmod +x $HOME/.gnupg/pinentry-wrapper
+	fi
+	chmod 700 $HOME/.gnupg && chmod 600 $HOME/.gnupg/*
+
+	mkdir $HOME/.ssh && touch $HOME/.ssh/config && chown -R $USER $HOME/.ssh && chmod 700 $HOME/.ssh && chmod 600 $HOME/.ssh/config
+	wget -O $HOME/.xinitrc $GIT_URL/xorg/.xinitrc
+
+	mkdir $HOME/.scripts
+	for SCRIPT in cmus-now dbc gitremote irc-post-commit-hook mutag pmf shotz statusbar todo torwall; do
+		wget -O $HOME/.scripts/$SCRIPT $GIT_URL/scripts/$SCRIPT && chmod +x $HOME/.scripts/$SCRIPT
+	done
+
+	mkdir -p $HOME/.local/share/fonts && wget -O $HOME/.local/share/fonts/BlockZone.ttf $GIT_URL/font/BlockZone.ttf
+}
+
+
+setup_fun() {
+	BUILD=$HOME/dev/build
+	mkdir -p $BUILD
+
+	sudo xbps-install -y asciiquarium cmatrix no-more-secrets tty-solitaire
+
+	wget -O $HOME/.scripts/irc2ansi.py https://github.com/internet-relay-chat/archive/blob/master/art/irc2ansi.py
+	wget -O $HOME/.scripts/bomber $GIT_URL/scripts/bomber && chmod +x $HOME/.scripts/bomber
+	wget -O $HOME/.scripts/pipes https://raw.githubusercontent.com/pipeseroni/pipes.sh/master/pipes.sh && chmod +x $HOME/.scripts/pipes
+
+	git clone https://github.com/AngelJumbo/lavat.git $BUILD/lavat
+	sudo make -C $BUILD/lavat clean install
+
+	git clone https://github.com/lptstr/fire --recurse $BUILD/fire
+	sudo make -C $BUILD/fire clean install
+
+	git clone https://github.com/ricoriedel/wipe $BUILD/wipe
+	cargo build --release --manifest-path $BUILD/wipe/Cargo.toml # Need to install
+
+	git clone https://github.com/pythops/bouncinamation $BUILD/bouncinamation
+	cargo build --release --manifest-path $BUILD/bouncinamation/Cargo.toml # Need to install
+
+	go install github.com/maaslalani/confetty@latest # Need to revise
+}
+
+
+setup_builds() {
+	BUILD=$HOME/dev/build
+	mkdir -p $BUILD
+
+	git clone --depth 1 http://git.suckless.org/dwm $BUILD/dwm
+	wget -O $BUILD/dwm/config.h $GIT_URL/dwm/config.h
+	wget -O $BUILD/dwm/patch_nosquares.diff $GIT_URL/dwm/patch_nosquares.diff
+	wget -O $BUILD/dwm/patch_notitles.diff $GIT_URL/dwm/patch_notitles.diff
+	patch $BUILD/dwm/drw.c $BUILD/dwm/patch_nosquares.diff
+	patch $BUILD/dwm/dwm.c $BUILD/dwm/patch_notitles.diff
+	sudo make -C $BUILD/dwm clean install
+
+	go install -v github.com/projectdiscovery/pdtm/cmd/pdtm@latest && pdtm --all
+}
+
+
+
+if [ "$#" -ne 1 ]; then
+	echo "usage: $0 [root|config|build|fun]" && exit 1
+fi
+
+case "$1" in
+    root)   setup_root    ;;
+    config) setup_configs ;;
+    build)  setup_builds  ;;
+    fun)    setup_fun     ;;
+    *)      echo "usage: $0 [root|config|build|fun]\n"; exit 1 ;;
+esac

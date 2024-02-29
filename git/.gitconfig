@@ -1,0 +1,32 @@
+[alias]
+	commits = log --color --graph --pretty=format:'%Cred%h%Creset - %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit
+	mclone = clone --depth=1
+	stats = diff --stat
+[color]
+	diff = auto
+	status = auto
+	branch = auto
+	interactive = auto
+	ui = true
+	pager = true
+[commit]
+	gpgSign = true
+[core]
+	editor = nano
+	pager = delta
+[diff]
+    colorMoved = default
+[interactive]
+    diffFilter = delta --color-only
+[merge]
+    conflictstyle = diff3
+[user]
+	signingkey = 441EB0F297E0DCF0AEF2F711EF4B922DB85DC9DE
+	name = acidvegas
+	email = acid.vegas@acid.vegas
+[pull]
+	ff = only
+[delta]
+    navigate = true
+    light = false
+

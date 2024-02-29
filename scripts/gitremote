@@ -1,0 +1,62 @@
+#!/bin/sh
+# git remote setup script - developed by acidvegas (https://git.acid.vegas)
+#
+# note: This assumes the directory structure of $HOME/dev/git/$USER/$REPO for each repository.
+#
+# usage:
+#	gitremote    | Update current working directory repository
+#	gitremote -a | Update every repository
+
+SIGNING_KEY='441EB0F297E0DCF0AEF2F711EF4B922DB85DC9DE'
+
+update_repo() {
+	DIR=$1
+	USER=$(basename $(dirname $(dirname $DIR)))
+    REPO=$(basename $(dirname $DIR))
+	echo "updating $USER/$REPO..."
+	git -C $DIR remote remove origin
+	if [ $USER = 'internetrelaychat' ]; then
+		git -C $DIR remote add origin git@github.com:internet-relay-chat/$REPO.git
+		git -C $DIR remote set-url --add --push origin git@github.com:internet-relay-chat/$REPO.git
+		git -C $DIR remote set-url --add --push origin git@gitlab.com:$USER/$REPO.git
+		git -C $DIR remote set-url --add --push origin git@codeberg.org:$USER/$REPO.git
+		git -C $DIR remote set-url --add --push origin supergit:$USER/$REPO.git
+		git -C $DIR remote set-url --add --push origin acidgit:$REPO.git
+	else
+		git -C $DIR remote add origin git@github.com:$USER/$REPO.git
+		git -C $DIR remote set-url --add --push origin git@github.com:$USER/$REPO.git
+		git -C $DIR remote set-url --add --push origin git@gitlab.com:$USER/$REPO.git
+		git -C $DIR remote set-url --add --push origin git@codeberg.org:$USER/$REPO.git
+		git -C $DIR remote set-url --add --push origin supergit:$USER/$REPO.git
+		git -C $DIR remote set-url --add --push origin acidgit:$REPO.git
+	fi
+	git -C $DIR config user.signingkey $SIGNING_KEY
+	if [ -f $DIR/description ]; then
+		if [ "$(cat $1/description)" = "Unnamed repository; edit this file 'description' to name the repository." ]; then
+			echo "Enter a description for $REPO:"
+			read DESC
+			echo "$DESC" > $DIR/description
+		fi
+	else
+		echo "Enter a description for $REPO:"
+		read DESC
+		echo "$DESC" > $DIR/description
+	fi
+	cp $HOME/.scripts/irc-post-commit-hook $DIR/hooks/post-commit
+	echo $USER > $DIR/owner
+	echo "https://git.acid.vegas/$REPO.git" > $DIR/url
+}
+
+if [ "$#" = '1' ]; then
+	if [ $1 = '-a' ]; then
+		for d in $(find $HOME/dev/git -type d -name mirror -prune -o -type d -name .git -print | sort); do
+			update_repo $d
+		done
+	fi
+else
+	if [ -d $PWD/.git ]; then
+		update_repo $PWD/.git
+	else
+		echo "invalid repository: missing .git directory"
+	fi
+fi
