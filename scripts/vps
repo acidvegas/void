@@ -53,6 +53,7 @@ setup_chroot() {
 	printf "printf \"nameserver 208.67.222.222\\\nnameserver 208.67.220.220\\\nnameserver 2620:119:35::35\\\nnameserver 2620:119:53::53\" > /etc/resolv.conf" >> /etc/rc.local
 
 	echo "$HOSTNAME" > /etc/hostname
+	echo 'export PS1="\e[38;5;237m\T\e[0m \e[38;5;196m\u@\h\e[0m \e[38;5;226m\w\e[0m : "' > /root/.bashrc
 	printf "set boldtext\nset minibar\nset nohelp\nset nowrap\nset quickblank\nset tabsize 4\nunbind ^J main\nset selectedcolor black,red\ninclude \"/usr/share/nano/*.nanorc\"\n" > /etc/nanorc
 	printf "\nexport HISTFILE=/dev/null\nexport LESSHISTFILE=/dev/null\nexport PYTHONHISTFILE=/dev/null\n" >> /etc/profile
 	printf "Defaults lecture = always\nDefaults lecture_file = /etc/sudoers.d/sudoers.lecture\nroot ALL=(ALL) ALL\n%%wheel ALL=(ALL) ALL\n" > /etc/sudoers
@@ -129,6 +130,12 @@ setup_chroot() {
 
 	xbps-reconfigure -fa
 }
+
+
+setup_user() {
+	echo 'export PS1="\e[38;5;237m\T\e[0m \e[38;5;196m\u@\h\e[0m \e[38;5;226m\w\e[0m : "' > ~/.bashrc
+}
+
 
 [ $1 = "root"   ] && setup_root
 [ $1 = "chroot" ] && setup_chroot
