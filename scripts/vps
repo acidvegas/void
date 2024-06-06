@@ -65,7 +65,8 @@ setup_chroot() {
 	ln -s /etc/sv/socklog-unix/ /etc/runit/runsvdir/default/
 	ln -s /etc/sv/nanoklogd/    /etc/runit/runsvdir/default/
 	ln -s /etc/sv/dropbear/     /etc/runit/runsvdir/default/
-	ln -s /etc/sv/lxd           /etc/runit/runsvdir/default/
+	ln -s /etc/sv/incus         /etc/runit/runsvdir/default/
+	ln -s /etc/sv/incus-user    /etc/runit/runsvdir/default/
 	ln -s /usr/share/zoneinfo/$TIMEZONE /etc/localtime
 
 	touch /swapfile
