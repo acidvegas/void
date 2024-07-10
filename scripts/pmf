@@ -4,7 +4,7 @@
 set -xev
 
 # Configuration
-SSH_PORT='22'
+PORT_SSH='22'
 
 # Kernel hardening settings
 mkdir -p /etc/sysctl.d
@@ -45,7 +45,7 @@ iptables -A INPUT -p icmp --icmp-type port-unreachable -j DROP
 iptables -A INPUT -i lo -j ACCEPT
 
 # Allow SSH access from the Pi server
-iptables -A INPUT -p tcp -s $PI_SERVER --dport $PORT_SSH -j ACCEPT
+iptables -A INPUT -p tcp --dport $PORT_SSH -j ACCEPT
 
 # Save rules
 iptables-save > /etc/iptables/iptables.rules

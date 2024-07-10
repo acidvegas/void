@@ -40,7 +40,7 @@ alias pubkey='ssh-keygen -y -f ~/.ssh/key'
 alias pydebug='python -m trace -t'
 alias torch='curl -s https://check.torproject.org | grep "Congratulations"'
 alias y2m='youtube-dl --extract-audio --audio-format mp3 --audio-quality 0 -o "%(title)s.%(ext)s" --no-cache-dir --no-call-home'
-alias up='sudo xbps install -Su && sudo xbps-install -u xbps && sudo xbps-remove -O' # What is this last command
+alias up='sudo mount -o remount,rw /boot && sudo xbps-install -Su && sudo mount -o remount,ro /boot'
 
 # scripts
 alias dbc='~/.scripts/dbc'

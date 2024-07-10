@@ -15,7 +15,7 @@ static const int resizehints       = 0;
 static const int lockfullscreen    = 1;
 static const Layout layouts[]      = { { "", tile } };
 static const Rule rules[]          = { { NULL, NULL, NULL, 0, False, -1 } };
-static const char *tags[]          = { "chat", "dev", "media", "work", "www", "other" };
+static const char *tags[]          = { "chat", "dev", "irc", "recon", "supernets", "work", "www", "other" };
 static const char *fonts[]         = { "Misc Ohsnap.Icons:style=Regular:size=11" };
 static const char dmenufont[]      = "Misc Ohsnap.Icons:style=Regular:size=11";
 static const char *colors[][3]     = {

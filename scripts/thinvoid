@@ -1,0 +1,47 @@
+#!/bin/sh
+# Thin Client Void Linux Setup - Developed by acidvegas (https://git.acid.vegas/void)
+
+GIT_URL="https://raw.githubusercontent.com/acidvegas/void/master"
+
+passwd && sv stop sshd && xbps-remove openssh
+
+ln -sf /usr/share/zoneinfo/America/New_York /etc/localtime
+
+xbps-install -y dropbear oath-toolkit rsync socklog-void tmux tor tree wget
+
+ln -sfv /etc/sv/nanoklogd    /var/service 
+ln -sfv /etc/sv/socklog-unix /var/service
+
+touch /swapfile && dd if=/dev/zero of=/swapfile bs=1M count=2k status=progress && chmod 0600 /swapfile && mkswap /swapfile && swapon /swapfile
+
+{
+    echo "/dev/mmcblk0p1 /boot  vfat  ro,noatime,nodev,noexec,nosuid 0 2"
+    echo "/dev/mmcblk0p2 /      ext4  rw,noatime                     0 1"
+    echo "tmpfs          /tmp   tmpfs defaults,nosuid,nodev          0 0"
+    echo "proc           /proc  proc  defaults,hidepid=2             0 0"
+    echo "/swapfile      none   swap  sw                             0 0"
+} > /etc/fstab
+
+printf "\nnohook resolv.conf\n" >> /etc/dhcpcd.conf && sv restart dhcpcd
+printf "nameserver 9.9.9.9\nnameserver 149.112.112.112\nnameserver 2620:fe::fe\nnameserver 2620:fe::9" > /etc/resolv.conf && chattr +i /etc/resolv.conf
+printf "skinny-mon\n" > /etc/hostname
+printf "HOSTNAME=\"skinny-mon\"\nHARDWARECLOCK=\"UTC\"\nTIMEZONE=\"America/New_York\"\nKEYMAP=us\n" > /etc/rc.conf
+printf "set boldtext\nset minibar\nset nohelp\nset nowrap\nset quickblank\nset tabsize 4\nunbind ^J main\nset selectedcolor black,red\ninclude \"/usr/share/nano/*.nanorc\"\n" > /etc/nanorc
+printf "\nexport HISTFILE=/dev/null\nexport LESSHISTFILE=/dev/null\n" >> /etc/profile
+printf '#!/bin/sh\nexec 2>&1\n[ -r conf ] && . ./conf\nexec dropbear -p CHANGE:ME -w -s -R -F\n' > /etc/sv/dropbear/run && chattr +i /etc/sv/dropbear/run && ln -sfv /etc/sv/dropbear /var/service
+
+wget -O $HOME/pmf $GIT_URL/scripts/pmf && chmod +x $HOME/pmf
+wget -O $HOME/.bashrc $GIT_URL/bash/.bash_thin
+
+useradd -m -s /bin/bash acidvegas && passwd acidvegas
+
+wget -O $HOME/.tmux.conf $GIT_URL/tmux/.tmux.conf
+wget -O $HOME/.bashrc $GIT_URL/bash/.bash_thin
+
+mkdir $HOME/.gnupg && wget -O $HOME/.gnupg/gpg.conf $GIT_URL/gpg/gpg.conf && chmod 700 $HOME/.gnupg
+printf "pinentry-program /usr/bin/pinentry-curses\ndefault-cache-ttl 3600" > $HOME/.gnupg/gpg-agent.conf
+chmod 600 $HOME/.gnupg/*
+
+mkdir $HOME/.scripts
+wget -O $HOME/.scripts/dmc $GIT_URL/scripts/dmc && chmod +x $HOME/.scripts/dmc
+wget -O $HOME/.scripts/pass https://raw.githubusercontent.com/acidvegas/pass/master/pass && chmod +x $HOME/.scripts/pass

@@ -9,4 +9,6 @@ $HOME/.scripts/statusbar.sh &
 # Example of dual monitor setup
 #{ sleep 2; xrandr --output HDMI1 --mode 1920x1080 --output DP1 --mode 1920x1080 --above HDMI1; } &
 
+redshift -P -O 3000 &
+
 exec dwm

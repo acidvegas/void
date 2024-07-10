@@ -15,7 +15,7 @@
 #
 # Useful commands:
 #   Git usage            : git config core.sshCommand "dbclient -i ~/.ssh/key"
-#   Generate private key : dropbearkey -t ed25519 -f ~/.dropbear/key
+#   Generate private key : dropbearkey -t ed25519 -f ~/.dropbear/key | grep "ssh-ed25519"
 #   Get public key       : dropbearkey -y -f ~/.dropbear/key | head -n 2 | tail -n 1
 
 load_host() {

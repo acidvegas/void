@@ -1,5 +1,6 @@
 #!/bin/bash
 # enter the zoid (zfs on root with zraid) - developed by acidvegas (https://git.acid.vegas/void)
+#      boot: https://github.com/leahneukirchen/hrmpf
 # reference: https://docs.zfsbootmenu.org/en/v2.2.x/guides/void-linux/uefi.html
 #            https://docs.zfsbootmenu.org/en/v2.3.x/guides/void-linux/uefi.html (do we need to make any updates?)
 
@@ -83,7 +84,12 @@ setup_chroot() {
 	ln -sf /etc/sv/dhcpcd /etc/runit/runsvdir/default/
 	hwclock --systohc
 	printf "$HOSTNAME\n" > /etc/hostname
-	printf "HOSTNAME=\"$HOSTNAME\"\nHARDWARECLOCK=\"UTC\"\nTIMEZONE=\"America/New_York\"\nKEYMAP=us\n" > /etc/rc.conf
+
+	# CGROUP_MODE="unified" is required on Void to fix a bug with incus expecting systemd (https://github.com/lxc/incus/issues/625#issuecomment-2153154219)
+	# Temporary solution:
+	#	mkdir /sys/fs/cgroup/systemd
+	#	mount -t cgroup -o none,name=systemd systemd /sys/fs/cgroup/systemd 
+	printf "HOSTNAME=\"$HOSTNAME\"\nHARDWARECLOCK=\"UTC\"\nTIMEZONE=\"America/New_York\"\nKEYMAP=us\nCGROUP_MODE=\"unified\"" > /etc/rc.conf
 
 	printf "en_US.UTF-8 UTF-8\nen_US ISO-8859-1\n" > /etc/default/libc-locales
 	xbps-reconfigure -f glibc-locales

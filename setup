@@ -14,6 +14,8 @@ REMOTE_PORT=2023 # CHANGE THIS
 GIT_URL="https://raw.githubusercontent.com/acidvegas/void/master"
 
 setup_root() {
+	setup_packages
+
 	useradd -m -s /bin/bash acidvegas && gpasswd -a acidvegas wheel && passwd acidvegas
 
 	wget -O /usr/share/kbd/consolefonts/ohsnap6x11r.psfu $GIT_URL/font/ohsnap6x11r.psfu
@@ -32,9 +34,10 @@ setup_root() {
 	printf '#!/bin/sh\nexec 2>&1\n[ -r conf ] && . ./conf\nexec dropbear -p CHANGE:ME -w -s -R -F\n' > /etc/sv/dropbear/run
 	printf "\nhsts=0\n" >> /etc/wgetrc
 	
+	ln -sfv /etc/sv/lxd          /var/service
 	ln -sfv /etc/sv/socklog-unix /var/service
-	ln -sfv /etc/sv/nanoklogd /var/service
-	ln -sf /etc/sv/dropbear /var/service/
+	ln -sfv /etc/sv/nanoklogd    /var/service
+	ln -sfv /etc/sv/dropbear     /var/service
 }
 
 
@@ -43,7 +46,7 @@ setup_packages() {
 
 	if [ $CPU = "intel" ]; then
 		xbps-install -y intel-ucode
-		xbps-reconfigure -f $(xbps-query -s linux | grep pkgver | cut -d " " -f 2) # Must regenerate initramfs
+		xbps-reconfigure -f $(xbps-query -s linux | grep pkgver | cut -d " " -f 2) # Must regenerate initramfs (This is broken right now)
 	elif [ $CPU = "amd" ]; then
 		xbps-install -y linux-firmware-amd
 	fi
@@ -53,7 +56,7 @@ setup_packages() {
 			xbps-install -y linux-firmware-intel mesa-dri vulkan-loader mesa-vulkan-intel intel-video-accel
 		fi
 		xbps-install -y xorg libX11-devel libX11 libXft-devel libXft  libXinerama-devel libXinerama libXrandr-devel libXrandr
-		xbps-install -y alacritty dmenu dunst firefox pinentry-dmenu scrot signal-desktop unclutter xclip
+		xbps-install -y alacritty dmenu dunst firefox pinentry-dmenu redshift scrot Signal-Desktop unclutter xclip
 		xbps-install -y ohsnap-font font-unifont-bdf freefont-ttf noto-fonts-ttf noto-fonts-ttf-extra noto-fonts-cjk noto-fonts-emoji
 		xbps-install -y alsa-utils cmus ffmpeg id3v2 eyeD3 youtube-dl # Revamp audio setup at some point
 		xbps-install -y vscode
@@ -63,15 +66,15 @@ setup_packages() {
 	xbps-install -y checkbashisms gcc go make patch pkg-config python3 python3-pip shellcheck
 
 	# Essentials
-	xbps-install -y curl dropbrear git lxc lxd socklog-void tmux tor tree unzip zip
+	xbps-install -y curl dropbear git lxc lxd socklog-void tmux tor tree unzip zip
 	xbps-install -y bandwhich glow gnupg2-scdaemon lazygit oath-toolkit progress rsync tmate
-	xbps-install -y earlyoom && ln -sfv /etc/sv/earlyoom /var/service/
+	#xbps-install -y earlyoom && ln -sfv /etc/sv/earlyoom /var/service/
 
 	# Alternatives
-	xbps-install -y bat btop delta exa
+	xbps-install -y bat btop delta duf exa procs
 
 	# Recon
-	xbps-install -y masscan termshark
+	xbps-install -y bpfmon masscan termshark
 }
 
 
@@ -89,10 +92,8 @@ setup_configs() {
 	wget -O $HOME/.gitconfig $GIT_URL/git/.gitconfig
 	mkdir $HOME/.gnupg && wget -O $HOME/.gnupg/gpg.conf $GIT_URL/gpg/gpg.conf
 
-	if [ $DISPLAY_SERVER = "xorg" ]; then
-		printf "pinentry-program $HOME/.gnupg/pinentry-wrapper\ndefault-cache-ttl 3600\n" > $HOME/.gnupg/gpg-agent.conf
-		printf "if [ \"\$PINENTRY_USER_DATA\" = \"dmenu\" ]; then\n\texec /usr/local/bin/pinentry-dmenu \"$@\"\nelse\n\texec /usr/bin/pinentry-curses \"$@\"\nfi\n" > $HOME/.gnupg/pinentry-wrapper && chmod +x $HOME/.gnupg/pinentry-wrapper
-	fi
+	printf "pinentry-program /usr/bin/pinentry-curses\ndefault-cache-ttl 3600" > $HOME/.gnupg/gpg-agent.conf
+	#printf "pinentry-program /usr/bin/pinentry-dmenu\ndefault-cache-ttl 3600" > $HOME/.gnupg/gpg-agent.conf
 	chmod 700 $HOME/.gnupg && chmod 600 $HOME/.gnupg/*
 
 	mkdir $HOME/.ssh && touch $HOME/.ssh/config && chown -R $USER $HOME/.ssh && chmod 700 $HOME/.ssh && chmod 600 $HOME/.ssh/config
@@ -129,7 +130,9 @@ setup_fun() {
 	git clone https://github.com/pythops/bouncinamation $BUILD/bouncinamation
 	cargo build --release --manifest-path $BUILD/bouncinamation/Cargo.toml # Need to install
 
-	go install github.com/maaslalani/confetty@latest # Need to revise
+	go install github.com/maaslalani/confetty@latest  # Animations
+	go install github.com/maaslalani/gambit@latest    # Chess
+	go install github.com/maxpaulus43/go-sweep@latest # Minesweeper
 }
 
 
