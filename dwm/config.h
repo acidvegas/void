@@ -15,7 +15,7 @@ static const int resizehints       = 0;
 static const int lockfullscreen    = 1;
 static const Layout layouts[]      = { { "", tile } };
 static const Rule rules[]          = { { NULL, NULL, NULL, 0, False, -1 } };
-static const char *tags[]          = { "chat", "dev", "irc", "recon", "supernets", "work", "www", "other" };
+static const char *tags[]          = { "chat", "dev", "irc", "recon", "supernets", "work", "www", "media", "other" };
 static const char *fonts[]         = { "Misc Ohsnap.Icons:style=Regular:size=11" };
 static const char dmenufont[]      = "Misc Ohsnap.Icons:style=Regular:size=11";
 static const char *colors[][3]     = {
@@ -59,7 +59,7 @@ static Key keys[] = {
 	{      0, XF86AudioPlay,         spawn,      {.v = music_toggle   } },
 	{      0, XF86MonBrightnessDown, spawn,      {.v = backlight_down } },
 	{      0, XF86MonBrightnessUp,   spawn,      {.v = backlight_up   } },
-	{      0, XK_Print,              spawn,      SHCMD("~/.scripts/shot.sh") },
+	{      0, XK_Print,              spawn,      SHCMD("~/.scripts/shotz -u") },
 	TAGKEYS(  XK_1, 0)
 	TAGKEYS(  XK_2, 1)
 	TAGKEYS(  XK_3, 2)

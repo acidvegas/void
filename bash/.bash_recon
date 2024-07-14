@@ -54,6 +54,6 @@ crtsh() {
 	curl -s "https://crt.sh/?q=$1&output=json" | jq -r '.[].name_value' | sort | uniq
 }
 
-shidb() {
+shodan() {
 	curl https://internetdb.shodan.io/$1
 }

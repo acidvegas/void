@@ -75,6 +75,7 @@ setup_chroot() {
 	passwd
 
 	xbps-install -Suy
+
 	xbps-install -y void-repo-nonfree
 	xbps-install -Suy
 	xbps-install -y intel-ucode

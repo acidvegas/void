@@ -6,10 +6,10 @@
 set -xev
 
 # Configuration
-CPU=intel # amd or intel
+CPU=intel # amd or intel (blank for none)
 DISPLAY_SERVER=xorg # xorg or blank for none
-GFX_DRIVER=intel # amd or intel (leave blank for none)
-REMOTE_PORT=2023 # CHANGE THIS
+GFX_DRIVER=intel # amd, intel, or nvidia (blank for none)
+ARCH=x86_64 # x86_64 or x86_64-musl
 
 GIT_URL="https://raw.githubusercontent.com/acidvegas/void/master"
 
@@ -17,13 +17,14 @@ setup_root() {
 	setup_packages
 
 	useradd -m -s /bin/bash acidvegas && gpasswd -a acidvegas wheel && passwd acidvegas
+	gpasswd -a acidvegas _incus && gpasswd -a acidvegas _incus-admin # Typically incus & incus-admin but void uses the underscore prefix
 
-	wget -O /usr/share/kbd/consolefonts/ohsnap6x11r.psfu $GIT_URL/font/ohsnap6x11r.psfu
-	wget -O /usr/share/kbd/consolefonts/ohsnap7x12r.psfu $GIT_URL/font/ohsnap7x12r.psfu
-	wget -O /usr/share/kbd/consolefonts/ohsnap7x14r.psfu $GIT_URL/font/ohsnap7x14r.psfu
-
+	for item in 6x11 7x12 7x14; do
+		wget -O /usr/share/kbd/consolefonts/ohsnap${item}r.psfu $GIT_URL/font/ohsnap${item}r.psfu
+	done
 	printf "\nnohook resolv.conf\n" >> /etc/dhcpcd.conf
-	printf "\nipv4only\nnodhcp6\n" >> /etc/dhcpcd.conf # For fixing "dhcpcd: ipv6nd_sendadvertisement: Operation not permitted" error
+	#printf "\nipv4only\nnodhcp6\n" >> /etc/dhcpcd.conf # For fixing "dhcpcd: ipv6nd_sendadvertisement: Operation not permitted" error
+	printf "nameserver 9.9.9.9\nnameserver149.112.112.112\nnameserver 2620:fe::fe\nnameserver 2620:fe::9" > /etc/resolv.conf
 	echo "proc /proc proc defaults,hidepid=2 0 0" >> /etc/fstab && mount -o remount /proc
 	printf "set boldtext\nset minibar\nset nohelp\nset nowrap\nset quickblank\nset tabsize 4\nunbind ^J main\nset selectedcolor black,red\ninclude \"/usr/share/nano/*.nanorc\"\n" > /etc/nanorc
 	printf "\nexport HISTFILE=/dev/null\nexport LESSHISTFILE=/dev/null\nexport PYTHONHISTFILE=/dev/null\n" >> /etc/profile
@@ -33,48 +34,73 @@ setup_root() {
 	printf "\n\033[1m     \033[32m\"Bee\" careful    \033[34m__\n       \033[32mwith sudo!    \033[34m// \ \n                     \\\\\\_/ \033[33m//\n   \033[35m''-.._.-''-.._.. \033[33m-(||)(')\n                     '''\033[0m\n" > /etc/sudoers.d/sudoers.lecture
 	printf '#!/bin/sh\nexec 2>&1\n[ -r conf ] && . ./conf\nexec dropbear -p CHANGE:ME -w -s -R -F\n' > /etc/sv/dropbear/run
 	printf "\nhsts=0\n" >> /etc/wgetrc
-	
-	ln -sfv /etc/sv/lxd          /var/service
-	ln -sfv /etc/sv/socklog-unix /var/service
-	ln -sfv /etc/sv/nanoklogd    /var/service
-	ln -sfv /etc/sv/dropbear     /var/service
+
+	for item in dhcpcd dropbear incus incus-user socklog-unix nanoklogd wpa_supplicant; do
+		ln -sfv /etc/sv/$item /var/service # Use /etc/runit/runsvdir/default/ instead of /var/service if in a chroot environemnt
+	done
 }
 
 
-setup_packages() {
+setup_nonfree() {
 	xbps-install -Suy void-repo-nonfree
 
+	# Might need to `xbps-recorder -f` after this
 	if [ $CPU = "intel" ]; then
-		xbps-install -y intel-ucode
-		xbps-reconfigure -f $(xbps-query -s linux | grep pkgver | cut -d " " -f 2) # Must regenerate initramfs (This is broken right now)
+		xbps-install -y intel-ucode linux-firmware-intel
 	elif [ $CPU = "amd" ]; then
 		xbps-install -y linux-firmware-amd
 	fi
 
 	if [ $DISPLAY_SERVER = "xorg" ]; then
 		if [ $GFX_DRIVER = "intel" ]; then
-			xbps-install -y linux-firmware-intel mesa-dri vulkan-loader mesa-vulkan-intel intel-video-accel
+			xbps-install -y  mesa-dri vulkan-loader mesa-vulkan-intel intel-video-accel
+		elif [ $GFX_DRIVER = "amd" ]; then
+			xbps-install -y mesa-dri vulkan-loader mesa-vulkan-radeon radeon-video-accel # Un-tested
+		elif [ $GFX_DRIVER = "nvidia" ]; then
+			xbps-install -y nvidia nvidia-libs nvidia-settings nvidia-xconfig # Un-tested
 		fi
-		xbps-install -y xorg libX11-devel libX11 libXft-devel libXft  libXinerama-devel libXinerama libXrandr-devel libXrandr
-		xbps-install -y alacritty dmenu dunst firefox pinentry-dmenu redshift scrot Signal-Desktop unclutter xclip
-		xbps-install -y ohsnap-font font-unifont-bdf freefont-ttf noto-fonts-ttf noto-fonts-ttf-extra noto-fonts-cjk noto-fonts-emoji
-		xbps-install -y alsa-utils cmus ffmpeg id3v2 eyeD3 youtube-dl # Revamp audio setup at some point
-		xbps-install -y vscode
+	fi
+
+	xbps-install -y Signal-Desktop vscode # Optional
+}
+
+
+setup_packages() {
+	# Un-comment to enable non-free proprietary software to be installed
+	#setup_nonfree
+
+	if [ $DISPLAY_SERVER = "xorg" ]; then
+		xbps-install -y xorg libX11 libX11-devel libXft libXft-devel libXinerama libXinerama-devel libXrandr libXrandr-devel xbacklight xrandr
+		xbps-install -y alacritty dmenu dunst firefox pinentry-dmenu redshift scrot unclutter xclip
+		xbps-install -y ohsnap-font font-unifont-bdf freefont-ttf noto-fonts-ttf noto-fonts-ttf-extra noto-fonts-cjk noto-fonts-emoji # These fonts give you the most unicode support coverage
 	fi
 
 	# Development
-	xbps-install -y checkbashisms gcc go make patch pkg-config python3 python3-pip shellcheck
+	if [ ! $ARCH = 'x86_64' ]; then
+		xbps-install -y gcc
+	fi
+	xbps-install -y checkbashisms go make patch pkg-config python3 python3-pip
 
 	# Essentials
-	xbps-install -y curl dropbear git lxc lxd socklog-void tmux tor tree unzip zip
-	xbps-install -y bandwhich glow gnupg2-scdaemon lazygit oath-toolkit progress rsync tmate
+	xbps-install -y curl dropbear git jq progress rsync socklog-void tmux tor tree unzip zip
+	
+	xbps-install -y bandwhich bpfmon glow gnupg2-scdaemon lxc incus incus-client incus-tools lazygit oath-toolkit
 	#xbps-install -y earlyoom && ln -sfv /etc/sv/earlyoom /var/service/
 
 	# Alternatives
 	xbps-install -y bat btop delta duf exa procs
 
+	# Fun
+	xbps-install -y asciiquarium cmatrix no-more-secrets tty-solitaire
+
+	# Audio
+	#xbps-install -y alsa-utils cmus ffmpeg id3v2 eyeD3 youtube-dl # Revamp audio setup at some point
+
 	# Recon
-	xbps-install -y bpfmon masscan termshark
+	#xbps-install -y aircrack-ng bettercap ettercap masscan tcpdump termshark wireshark
+
+	# Radio
+	#xbps-install -y airspy chirp CubicSDR gnuradio gqrx inspectrum librtlsdr rtl-sdr rx_tools SoapyRTLSDR SDRPlusPlus
 }
 
 
@@ -82,21 +108,20 @@ setup_configs() {
 	wget -O $HOME/.alacritty.toml $GIT_URL/alacritty/.alacritty.toml
 	wget -O $HOME/.tmux.conf $GIT_URL/tmux/.tmux.conf
 
-	wget -O $HOME/.bashrc $GIT_URL/bash/.bashrc
-	wget -O $HOME/.bash_aliases $GIT_URL/bash/.bash_aliases
-	wget -O $HOME/.bash_functions $GIT_URL/bash/.bash_functions
-	. $HOME/.bashrc # POSIX shell doesn't support source
+	for item in bashrc bash_aliases bash_functions; do
+		wget -O $HOME/.$item $GIT_URL/$item
+	done
 
-	mkdir -p $HOME/.config/cmus && wget -O $HOME/.config/cmus/autosave $GIT_URL/cmus/autosave
-	mkdir -p $HOME/.config/dunst && wget -O $HOME/.config/dunst/dunstrc $GIT_URL/dunst/dunstrc
+	#mkdir -p $HOME/.config/cmus && wget -O $HOME/.config/cmus/autosave $GIT_URL/cmus/autosave
+	#mkdir -p $HOME/.config/dunst && wget -O $HOME/.config/dunst/dunstrc $GIT_URL/dunst/dunstrc
+
 	wget -O $HOME/.gitconfig $GIT_URL/git/.gitconfig
-	mkdir $HOME/.gnupg && wget -O $HOME/.gnupg/gpg.conf $GIT_URL/gpg/gpg.conf
 
+	mkdir $HOME/.gnupg && wget -O $HOME/.gnupg/gpg.conf $GIT_URL/gpg/gpg.conf
 	printf "pinentry-program /usr/bin/pinentry-curses\ndefault-cache-ttl 3600" > $HOME/.gnupg/gpg-agent.conf
 	#printf "pinentry-program /usr/bin/pinentry-dmenu\ndefault-cache-ttl 3600" > $HOME/.gnupg/gpg-agent.conf
 	chmod 700 $HOME/.gnupg && chmod 600 $HOME/.gnupg/*
 
-	mkdir $HOME/.ssh && touch $HOME/.ssh/config && chown -R $USER $HOME/.ssh && chmod 700 $HOME/.ssh && chmod 600 $HOME/.ssh/config
 	wget -O $HOME/.xinitrc $GIT_URL/xorg/.xinitrc
 
 	mkdir $HOME/.scripts
@@ -111,8 +136,6 @@ setup_configs() {
 setup_fun() {
 	BUILD=$HOME/dev/build
 	mkdir -p $BUILD
-
-	sudo xbps-install -y asciiquarium cmatrix no-more-secrets tty-solitaire
 
 	wget -O $HOME/.scripts/irc2ansi.py https://github.com/internet-relay-chat/archive/blob/master/art/irc2ansi.py
 	wget -O $HOME/.scripts/bomber $GIT_URL/scripts/bomber && chmod +x $HOME/.scripts/bomber
