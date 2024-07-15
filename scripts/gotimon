@@ -1,0 +1,27 @@
+#!/bin/sh
+# Gotify Monitor - developed by acidvegas (https://git.acid.vegas/void)
+
+GOTIFY_SERVER="push.example.com:3000"
+GOTIFY_APP_ID="2"
+GOTIFY_CLIENT_TOKEN="changeme"
+
+while true; do
+	websocat "wss://$GOTIFY_SERVER/stream?token=$GOTIFY_CLIENT_TOKEN" | while read event; do
+		appid=$(echo "$event" | jq '.appid')
+
+        [ ! $appid -eq $GOTIFY_APP_ID ] && continue # messages for other apps are ignored
+
+		date=$(echo "$event" | jq -r '.date')
+		id=$(echo "$event" | jq '.id')
+		message=$(echo "$event" | jq -r '.message')
+		priority=$(echo "$event" | jq '.priority') # sets the port to scan
+		title=$(echo "$event" | jq -r '.title')
+		formatted_date=$(date -d "$date" +"%m-%d %I:%M")
+
+		printf "%-11s | %-5s | %-10s | %s\n" "$formatted_date" "$id" "$title" "$message"
+
+        notify-send "Gotify - $title" "$message"
+	done
+	echo "Connection to gotify server lost, attempting to reconnect in 30 seconds..."
+	sleep 30
+done

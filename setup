@@ -84,7 +84,7 @@ setup_packages() {
 	# Essentials
 	xbps-install -y curl dropbear git jq progress rsync socklog-void tmux tor tree unzip zip
 
-	xbps-install -y bandwhich bpfmon glow gnupg2-scdaemon lxc incus incus-client incus-tools lazygit oath-toolkit
+	xbps-install -y bandwhich bpfmon glow gnupg2-scdaemon lxc incus incus-client incus-tools lazygit oath-toolkit websocat
 	#xbps-install -y earlyoom && ln -sfv /etc/sv/earlyoom /var/service/
 
 	# Alternatives
@@ -112,8 +112,8 @@ setup_configs() {
 		wget -O $HOME/.$item $GIT_URL/$item
 	done
 
-	#mkdir -p $HOME/.config/cmus && wget -O $HOME/.config/cmus/autosave $GIT_URL/cmus/autosave
-	#mkdir -p $HOME/.config/dunst && wget -O $HOME/.config/dunst/dunstrc $GIT_URL/dunst/dunstrc
+	mkdir -p $HOME/.config/cmus && wget -O $HOME/.config/cmus/autosave $GIT_URL/cmus/autosave
+	mkdir -p $HOME/.config/dunst && wget -O $HOME/.config/dunst/dunstrc $GIT_URL/dunst/dunstrc
 
 	wget -O $HOME/.gitconfig $GIT_URL/git/.gitconfig
 
