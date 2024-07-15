@@ -129,7 +129,7 @@ setup_configs() {
 		wget -O $HOME/.scripts/$SCRIPT $GIT_URL/scripts/$SCRIPT && chmod +x $HOME/.scripts/$SCRIPT
 	done
 
-	mkdir -p $HOME/.local/share/fonts && wget -O $HOME/.local/share/fonts/BlockZone.ttf $GIT_URL/font/BlockZone.ttf
+	mkdir -p $HOME/.local/share/fonts && wget -O $HOME/.local/share/fonts/BlockZone.ttf $GIT_URL/font/BlockZone.ttf && fc-cache -f -v
 }
 
 
