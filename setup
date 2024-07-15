@@ -28,7 +28,7 @@ setup_root() {
 	echo "proc /proc proc defaults,hidepid=2 0 0" >> /etc/fstab && mount -o remount /proc
 	printf "set boldtext\nset minibar\nset nohelp\nset nowrap\nset quickblank\nset tabsize 4\nunbind ^J main\nset selectedcolor black,red\ninclude \"/usr/share/nano/*.nanorc\"\n" > /etc/nanorc
 	printf "\nexport HISTFILE=/dev/null\nexport LESSHISTFILE=/dev/null\nexport PYTHONHISTFILE=/dev/null\n" >> /etc/profile
-	printf "#\!/bin/sh\nclear && (printf \"\" && printf \"   E N T E R   T H E   V O I D\"  && printf \"\") | nms -af red\n" > /etc/profile.d/motd.sh
+	printf "#\!/bin/sh\nclear && (echo && printf \"   E N T E R   T H E   V O I D\n"  && echo) | nms -acf red\n" > /etc/profile.d/motd.sh
 	printf "\nFONT=\"ohsnap6x11r\"\n" >> /etc/rc.conf
 	printf "Defaults lecture = always\nDefaults lecture_file = /etc/sudoers.d/sudoers.lecture\nroot ALL=(ALL) ALL\n%%wheel ALL=(ALL) ALL\n" > /etc/sudoers
 	printf "\n\033[1m     \033[32m\"Bee\" careful    \033[34m__\n       \033[32mwith sudo!    \033[34m// \ \n                     \\\\\\_/ \033[33m//\n   \033[35m''-.._.-''-.._.. \033[33m-(||)(')\n                     '''\033[0m\n" > /etc/sudoers.d/sudoers.lecture
@@ -83,7 +83,7 @@ setup_packages() {
 
 	# Essentials
 	xbps-install -y curl dropbear git jq progress rsync socklog-void tmux tor tree unzip zip
-	
+
 	xbps-install -y bandwhich bpfmon glow gnupg2-scdaemon lxc incus incus-client incus-tools lazygit oath-toolkit
 	#xbps-install -y earlyoom && ln -sfv /etc/sv/earlyoom /var/service/
 
@@ -176,14 +176,12 @@ setup_builds() {
 
 
 
-if [ "$#" -ne 1 ]; then
-	echo "usage: $0 [root|config|build|fun]" && exit 1
-fi
+[ "$#" -ne 1 ] && echo "usage: $0 [root|config|build|fun]" && exit 1
 
 case "$1" in
-    root)   setup_root    ;;
-    config) setup_configs ;;
-    build)  setup_builds  ;;
-    fun)    setup_fun     ;;
-    *)      echo "usage: $0 [root|config|build|fun]\n"; exit 1 ;;
+	root)   setup_root    ;;
+	config) setup_configs ;;
+	build)  setup_builds  ;;
+	fun)    setup_fun     ;;
+	*)      echo "usage: $0 [root|config|build|fun]\n"; exit 1 ;;
 esac
