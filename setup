@@ -6,18 +6,20 @@
 set -xev
 
 # Configuration
-CPU=intel # amd or intel (blank for none)
+ARCH=x86_64         # x86_64 or x86_64-musl
+CPU=intel           # amd or intel (blank for none)
 DISPLAY_SERVER=xorg # xorg or blank for none
-GFX_DRIVER=intel # amd, intel, or nvidia (blank for none)
-ARCH=x86_64 # x86_64 or x86_64-musl
+GFX_DRIVER=intel    # amd, intel, or nvidia (blank for none)
+USERNAME=acidvegas
+
 
 GIT_URL="https://raw.githubusercontent.com/acidvegas/void/master"
 
 setup_root() {
 	setup_packages
 
-	useradd -m -s /bin/bash acidvegas && gpasswd -a acidvegas wheel && passwd acidvegas
-	gpasswd -a acidvegas _incus && gpasswd -a acidvegas _incus-admin # Typically incus & incus-admin but void uses the underscore prefix
+	useradd -m -s /bin/bash $USERNAME && gpasswd -a $USERNAME wheel && passwd $USERNAME
+	gpasswd -a $USERNAME _incus && gpasswd -a $USERNAME _incus-admin # Typically incus & incus-admin but void uses the underscore prefix
 
 	for item in 6x11 7x12 7x14; do
 		wget -O /usr/share/kbd/consolefonts/ohsnap${item}r.psfu $GIT_URL/font/ohsnap${item}r.psfu

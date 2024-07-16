@@ -180,7 +180,7 @@ setup_chroot() {
 	if [ $SWAP_SIZE -gt 0 ]; then
 		touch /swapfile
 		if [ $ROOT_FS = "btrfs" ]; then
-			chattr +C /swapfile
+			chattr +C /swapfile # Needed?
 		fi
 		dd if=/dev/zero of=/swapfile bs=1M count=${SWAP_SIZE}k status=progress
 		chmod 0600 /swapfile
