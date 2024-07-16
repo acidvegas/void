@@ -152,7 +152,7 @@ setup_fun() {
 	BUILD=$HOME/dev/build
 	mkdir -p $BUILD
 
-	wget -O $HOME/.scripts/irc2ansi.py https://github.com/internet-relay-chat/archive/blob/master/art/irc2ansi.py
+	wget -O $HOME/.scripts/irc2ansi.py https://raw.githubusercontent.com/internet-relay-chat/archive/master/art/irc2ansi.py
 	wget -O $HOME/.scripts/bomber $GIT_URL/scripts/bomber && chmod +x $HOME/.scripts/bomber
 	wget -O $HOME/.scripts/pipes https://raw.githubusercontent.com/pipeseroni/pipes.sh/master/pipes.sh && chmod +x $HOME/.scripts/pipes
 
@@ -185,8 +185,6 @@ setup_builds() {
 	patch $BUILD/dwm/drw.c $BUILD/dwm/patch_nosquares.diff
 	patch $BUILD/dwm/dwm.c $BUILD/dwm/patch_notitles.diff
 	sudo make -C $BUILD/dwm clean install
-
-	go install -v github.com/projectdiscovery/pdtm/cmd/pdtm@latest && pdtm --all
 }
 
 
