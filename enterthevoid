@@ -192,7 +192,7 @@ setup_chroot() {
 	if [ $BOOT_OPTION = "UEFI" ]; then
 		xbps-install gummiboot
 		gummiboot install
-		# Optional, copy the EFI /boot/efi/EFI/boot/bootx64.efi to for tricking compatability
+		cp /boot/efi/EFI/GRUB/grubx64.efi /boot/efi/EFI/boot/bootx64.efi # copy the EFI for tricking compatability
 	elif [ $BOOT_OPTION = "BIOS" ]; then
 		xbps-install grub
 		grub-install /dev/$DRIVE
