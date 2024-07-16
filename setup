@@ -70,19 +70,23 @@ setup_packages() {
 	#setup_nonfree
 
 	if [ $DISPLAY_SERVER = "xorg" ]; then
+		#xbps-install -y mesa-dri # Raspberry Pi
 		xbps-install -y xorg libX11 libX11-devel libXft libXft-devel libXinerama libXinerama-devel libXrandr libXrandr-devel xbacklight xrandr
 		xbps-install -y alacritty dmenu dunst firefox pinentry-dmenu redshift scrot unclutter xclip
 		xbps-install -y ohsnap-font font-unifont-bdf freefont-ttf noto-fonts-ttf noto-fonts-ttf-extra noto-fonts-cjk noto-fonts-emoji # These fonts give you the most unicode support coverage
 	fi
 
 	# Development
-	if [ ! $ARCH = 'x86_64' ]; then
+	if [ $ARCH = 'x86_64' ]; then
 		xbps-install -y gcc
 	fi
 	xbps-install -y checkbashisms go make patch pkg-config python3 python3-pip
 
 	# Essentials
 	xbps-install -y curl dropbear git jq progress rsync socklog-void tmux tor tree unzip zip
+
+	# Raspberry Pi specific
+	xbps-install -y rng-tools && ln -sfv /etc/sv/rngd /var/service/ && sv up rngd
 
 	xbps-install -y bandwhich bpfmon glow gnupg2-scdaemon lxc incus incus-client incus-tools lazygit oath-toolkit websocat
 	#xbps-install -y earlyoom && ln -sfv /etc/sv/earlyoom /var/service/

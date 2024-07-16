@@ -14,6 +14,6 @@ $HOME/.scripts/statusbar.sh &
 # Example rotation
 #{ sleep 2; xrandr --output DSI-1 --rotate right; } &
 
-redshift -P -O 4000 &
+redshift -P -O 4000 & # How do we get this working on DSI-1 with the uConsole ?
 
 exec dwm

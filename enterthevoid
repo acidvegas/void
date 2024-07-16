@@ -192,8 +192,6 @@ setup_chroot() {
 	if [ $BOOT_OPTION = "UEFI" ]; then
 		xbps-install gummiboot
 		gummiboot install
-		nano /boot/loader/void-options.conf
-		xbps-reconfigure -f linux$(unamer -r)
 		# Optional, copy the EFI /boot/efi/EFI/boot/bootx64.efi to for tricking compatability
 	elif [ $BOOT_OPTION = "BIOS" ]; then
 		xbps-install grub
