@@ -10,6 +10,7 @@ ARCH=x86_64         # x86_64 or x86_64-musl
 CPU=intel           # amd or intel (blank for none)
 DISPLAY_SERVER=xorg # xorg or blank for none
 GFX_DRIVER=intel    # amd, intel, or nvidia (blank for none)
+REMOTE=dropbear     # dropbear or ssh
 USERNAME=acidvegas
 
 
@@ -34,7 +35,15 @@ setup_root() {
 	printf "\nFONT=\"ohsnap6x11r\"\n" >> /etc/rc.conf
 	printf "Defaults lecture = always\nDefaults lecture_file = /etc/sudoers.d/sudoers.lecture\nroot ALL=(ALL) ALL\n%%wheel ALL=(ALL) ALL\n" > /etc/sudoers
 	printf "\n\033[1m     \033[32m\"Bee\" careful    \033[34m__\n       \033[32mwith sudo!    \033[34m// \ \n                     \\\\\\_/ \033[33m//\n   \033[35m''-.._.-''-.._.. \033[33m-(||)(')\n                     '''\033[0m\n" > /etc/sudoers.d/sudoers.lecture
-	printf '#!/bin/sh\nexec 2>&1\n[ -r conf ] && . ./conf\nexec dropbear -p CHANGE:ME -w -s -R -F\n' > /etc/sv/dropbear/run
+
+	if [ $REMOTE = "ssh" ]; then
+		xbps-install -y openssh
+		printf "PermitRootLogin no\nPasswordAuthentication no\n" >> /etc/ssh/sshd_config
+		ln -sfv /etc/sv/sshd /var/service/
+	elif [ $REMOTE = "dropbear" ]; then
+		printf '#!/bin/sh\nexec 2>&1\n[ -r conf ] && . ./conf\nexec dropbear -p CHANGE:ME -w -s -R -F\n' > /etc/sv/dropbear/run
+	fi
+	
 	printf "\nhsts=0\n" >> /etc/wgetrc
 
 	for item in dhcpcd dropbear incus incus-user socklog-unix nanoklogd wpa_supplicant; do
@@ -75,7 +84,7 @@ setup_packages() {
 		#xbps-install -y mesa-dri # Raspberry Pi
 		xbps-install -y xorg libX11 libX11-devel libXft libXft-devel libXinerama libXinerama-devel libXrandr libXrandr-devel xbacklight xrandr
 		xbps-install -y alacritty dmenu dunst firefox pinentry-dmenu redshift scrot unclutter xclip
-		xbps-install -y ohsnap-font font-unifont-bdf freefont-ttf noto-fonts-ttf noto-fonts-ttf-extra noto-fonts-cjk noto-fonts-emoji # These fonts give you the most unicode support coverage
+		xbps-install -y ohsnap-font font-unifont-bdf freefont-ttf noto-fonts-ttf noto-fonts-ttf-extra noto-fonts-cjk noto-fonts-emoji # These fonts give you the most unicode support coverage (noto)
 	fi
 
 	# Development
@@ -115,7 +124,7 @@ setup_configs() {
 	wget -O $HOME/.tmux.conf $GIT_URL/tmux/.tmux.conf
 
 	for item in bashrc bash_aliases bash_functions; do
-		wget -O $HOME/.$item $GIT_URL/$item
+		wget -O $HOME/.$item $GIT_URL/bash/.$item
 	done
 
 	mkdir -p $HOME/.config/cmus && wget -O $HOME/.config/cmus/autosave $GIT_URL/cmus/autosave
