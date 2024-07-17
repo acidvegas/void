@@ -144,9 +144,10 @@ setup_configs() {
 	wget -O $HOME/.xinitrc $GIT_URL/xorg/.xinitrc
 
 	mkdir $HOME/.scripts
-	for SCRIPT in cmus-now dbc gitremote irc-post-commit-hook mutag pmf shotz statusbar todo torwall; do
+	for SCRIPT in cmus-now gitremote irc-post-commit-hook mutag pmf shotz statusbar todo torwall; do
 		wget -O $HOME/.scripts/$SCRIPT $GIT_URL/scripts/$SCRIPT && chmod +x $HOME/.scripts/$SCRIPT
 	done
+	wget -O $HOME/.scripts/dbc https://raw.githubusercontent.com/acidvegas/dbc/main/dbc && chmod +x $HOME/.scripts/dbc
 
 	mkdir -p $HOME/.local/share/fonts && wget -O $HOME/.local/share/fonts/BlockZone.ttf $GIT_URL/font/BlockZone.ttf && fc-cache -f -v
 }
