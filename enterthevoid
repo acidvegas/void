@@ -145,10 +145,10 @@ setup_chroot() {
 
 	useradd -m -s /bin/bash $USERNAME && passwd $USERNAME && gpasswd -a $USERNAME wheel
 	ln -sf /usr/share/zoneinfo/$TIMEZONE /etc/localtime
-	ln -sf /etc/sv/dhcpcd /etc/runit/runsvdir/default/
+	#ln -sf /etc/sv/dhcpcd /etc/runit/runsvdir/default/
 	hwclock --systohc
 	printf "$HOSTNAME\n" > /etc/hostname
-	printf "HOSTNAME=\"$HOSTNAME\"\nHARDWARECLOCK=\"UTC\"\nTIMEZONE=\"$TIMEZONE\"\nKEYMAP=us\n" > /etc/rc.conf
+	printf "HOSTNAME=\"$HOSTNAME\"\nHARDWARECLOCK=\"UTC\"\nTIMEZONE=\"$TIMEZONE\"\nKEYMAP=us\nCGROUP_MODE=\"unified\"\n" > /etc/rc.conf
 
 	if [ $ARCH = 'x86_64' ]; then
 		printf "en_US.UTF-8 UTF-8\n" > /etc/default/libc-locales

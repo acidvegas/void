@@ -27,6 +27,7 @@ setup_root() {
 	done
 	printf "\nnohook resolv.conf\n" >> /etc/dhcpcd.conf
 	#printf "\nipv4only\nnodhcp6\n" >> /etc/dhcpcd.conf # For fixing "dhcpcd: ipv6nd_sendadvertisement: Operation not permitted" error
+	echo "CGROUP_MODE=\"unified\"" >> /etc/rc.conf
 	printf "nameserver 9.9.9.9\nnameserver149.112.112.112\nnameserver 2620:fe::fe\nnameserver 2620:fe::9" > /etc/resolv.conf
 	echo "proc /proc proc defaults,hidepid=2 0 0" >> /etc/fstab && mount -o remount /proc
 	printf "set boldtext\nset minibar\nset nohelp\nset nowrap\nset quickblank\nset tabsize 4\nunbind ^J main\nset selectedcolor black,red\ninclude \"/usr/share/nano/*.nanorc\"\n" > /etc/nanorc
@@ -36,13 +37,16 @@ setup_root() {
 	printf "Defaults lecture = always\nDefaults lecture_file = /etc/sudoers.d/sudoers.lecture\nroot ALL=(ALL) ALL\n%%wheel ALL=(ALL) ALL\n" > /etc/sudoers
 	printf "\n\033[1m     \033[32m\"Bee\" careful    \033[34m__\n       \033[32mwith sudo!    \033[34m// \ \n                     \\\\\\_/ \033[33m//\n   \033[35m''-.._.-''-.._.. \033[33m-(||)(')\n                     '''\033[0m\n" > /etc/sudoers.d/sudoers.lecture
 
+	# For Drevo Calibur V2 FN key fix
+	#echo 0 | sudo pkexec tee /sys/module/hid_apple/parameters/fnmode
+
 	if [ $REMOTE = "dropbear" ]; then
 		LOCAL_IP=$(ip addr show $WIFI_DEV | grep 'inet ' | awk '{print $2}' | cut -d'/' -f1)
 		RND_PORT=$(shuf -i 10000-65535 -n 1)
 		xbps-install -y dropbear
 		printf '#!/bin/sh\nexec 2>&1\n[ -r conf ] && . ./conf\nexec dropbear -p $LOCAL_IP:$RND_PORT -w -s -R -F' > /etc/sv/dropbear/run
 	fi
-	
+
 	printf "\nhsts=0\n" >> /etc/wgetrc
 
 	for item in dhcpcd incus incus-user socklog-unix nanoklogd wpa_supplicant; do
@@ -54,7 +58,6 @@ setup_root() {
 setup_nonfree() {
 	xbps-install -Suy void-repo-nonfree
 
-	# Might need to `xbps-recorder -f` after this
 	if [ $CPU = "intel" ]; then
 		xbps-install -y intel-ucode linux-firmware-intel
 	elif [ $CPU = "amd" ]; then
@@ -101,7 +104,7 @@ setup_packages() {
 	xbps-install -y curl dropbear git jq progress rsync socklog-void tmux tor tree unzip zip
 
 	# Raspberry Pi specific
-	xbps-install -y rng-tools && ln -sfv /etc/sv/rngd /var/service/ && sv up rngd
+	#xbps-install -y rng-tools && ln -sfv /etc/sv/rngd /var/service/ && sv up rngd
 
 	xbps-install -y bandwhich bpfmon glow gnupg2-scdaemon lxc incus incus-client incus-tools lazygit oath-toolkit websocat
 	#xbps-install -y earlyoom && ln -sfv /etc/sv/earlyoom /var/service/
@@ -150,6 +153,9 @@ setup_configs() {
 	wget -O $HOME/.scripts/dbc https://raw.githubusercontent.com/acidvegas/dbc/main/dbc && chmod +x $HOME/.scripts/dbc
 
 	mkdir -p $HOME/.local/share/fonts && wget -O $HOME/.local/share/fonts/BlockZone.ttf $GIT_URL/font/BlockZone.ttf && fc-cache -f -v
+
+	VERSION=$(curl -s https://api.github.com/repos/obsidianmd/obsidian-releases/releases/latest | jq -r .tag_name | cut -c2-)
+	wget -O $HOME/.local/bin/obsidian https://github.com/obsidianmd/obsidian-releases/releases/download/v${VERSION}/Obsidian-${VERSION}.AppImage
 }
 
 
