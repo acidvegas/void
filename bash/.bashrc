@@ -2,9 +2,12 @@
 
 export LC_CTYPE=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
+
 export GPG_TTY=$(tty)
+
 export GOPATH=$HOME/dev/go
-export PATH=$HOME/.local/bin:$PATH:$GOPATH/bin
+export CARGO_HOME=$HOME/dev/cargo
+export PATH=$PATH:/opt:$HOME/.local/bin:$HOME/dev/go/bin:$HOME/dev/cargo/bin:$GOPATH/bin
 
 [ -f $HOME/.bash_aliases   ] && source $HOME/.bash_aliases
 [ -f $HOME/.bash_functions ] && source $HOME/.bash_functions

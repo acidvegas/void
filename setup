@@ -10,9 +10,11 @@ ARCH=x86_64         # x86_64 or x86_64-musl
 CPU=intel           # amd or intel (blank for none)
 DISPLAY_SERVER=xorg # xorg or blank for none
 GFX_DRIVER=intel    # amd, intel, or nvidia (blank for none)
+PI=0                # 0 for desktop, 1 for Raspberry Pi
 REMOTE=dropbear     # dropbear or ssh (blank for none)
 USERNAME=acidvegas
 WIFI_DEV=wlan0
+
 
 GIT_URL="https://raw.githubusercontent.com/acidvegas/void/master"
 
@@ -36,6 +38,7 @@ setup_root() {
 	printf "\nFONT=\"ohsnap6x11r\"\n" >> /etc/rc.conf
 	printf "Defaults lecture = always\nDefaults lecture_file = /etc/sudoers.d/sudoers.lecture\nroot ALL=(ALL) ALL\n%%wheel ALL=(ALL) ALL\n" > /etc/sudoers
 	printf "\n\033[1m     \033[32m\"Bee\" careful    \033[34m__\n       \033[32mwith sudo!    \033[34m// \ \n                     \\\\\\_/ \033[33m//\n   \033[35m''-.._.-''-.._.. \033[33m-(||)(')\n                     '''\033[0m\n" > /etc/sudoers.d/sudoers.lecture
+	printf "\nhsts=0\n" >> /etc/wgetrc
 
 	# For Drevo Calibur V2 FN key fix
 	#echo 0 | sudo pkexec tee /sys/module/hid_apple/parameters/fnmode
@@ -46,8 +49,6 @@ setup_root() {
 		xbps-install -y dropbear
 		printf '#!/bin/sh\nexec 2>&1\n[ -r conf ] && . ./conf\nexec dropbear -p $LOCAL_IP:$RND_PORT -w -s -R -F' > /etc/sv/dropbear/run
 	fi
-
-	printf "\nhsts=0\n" >> /etc/wgetrc
 
 	for item in dhcpcd incus incus-user socklog-unix nanoklogd wpa_supplicant; do
 		ln -sfv /etc/sv/$item /var/service # Use /etc/runit/runsvdir/default/ instead of /var/service if in a chroot environemnt
@@ -74,13 +75,15 @@ setup_nonfree() {
 		fi
 	fi
 
-	xbps-install -y Signal-Desktop vscode # Optional
+	xbps-reconfigure -f linux
+
+	xbps-install -y Signal-Desktop
 }
 
 
 setup_packages() {
 	# Un-comment to enable non-free proprietary software to be installed
-	#setup_nonfree
+	setup_nonfree
 
 	if [ $DISPLAY_SERVER = "xorg" ]; then
 		#xbps-install -y mesa-dri # Raspberry Pi
@@ -93,7 +96,9 @@ setup_packages() {
 	if [ $ARCH = 'x86_64' ]; then
 		xbps-install -y gcc
 	fi
-	xbps-install -y checkbashisms go make patch pkg-config python3 python3-pip
+	xbps-install -y cargo checkbashisms go make patch pkg-config python3 python3-pip
+	xbps-install -y ansible aws-cli python3-aiodns python3-aiofiles python3-aiohttp python3-boto3 python3-Flask terraform
+	xbps-install -y bluetuith 
 
 	# Essentials
 	if [ $REMOTE = "dropbear" ]; then
@@ -101,25 +106,31 @@ setup_packages() {
 	elif [ $REMOTE = "ssh" ] || [ $REMOTE = "openssh" ]; then
 		xbps-install -y dhcpcd openssh
 	fi
-	xbps-install -y curl dropbear git jq progress rsync socklog-void tmux tor tree unzip zip
+	xbps-install -y curl dropbear git jq progress rsync socklog-void tmux tor tree unzip whois zip
+	xbps-install -y tailscale wireguard wireguard-tools wireproxy
+
+	xbps-install -y python3-zulip zulip-desktop zulip-term
 
 	# Raspberry Pi specific
 	#xbps-install -y rng-tools && ln -sfv /etc/sv/rngd /var/service/ && sv up rngd
 
-	xbps-install -y bandwhich bpfmon glow gnupg2-scdaemon lxc incus incus-client incus-tools lazygit oath-toolkit websocat
+	xbps-install -y  glow gotify-cli gnupg2-scdaemon lxc incus incus-client incus-tools lazygit oath-toolkit websocat
 	#xbps-install -y earlyoom && ln -sfv /etc/sv/earlyoom /var/service/
 
 	# Alternatives
-	xbps-install -y bat btop delta duf exa procs
+	xbps-install -y bat btop delta duf exa procs xsv
 
 	# Fun
-	xbps-install -y asciiquarium cmatrix no-more-secrets tty-solitaire
+	xbps-install -y asciiquarium chess-tui cmatrix no-more-secrets tuimoji tty-solitaire
 
 	# Audio
-	#xbps-install -y alsa-utils cmus ffmpeg id3v2 eyeD3 youtube-dl # Revamp audio setup at some point
+	#xbps-install -y alsa-utils cmus ffmpeg id3v2 eyeD3 spotify-tui youtube-dl # Revamp audio setup at some point
+
+	# Hardware
+	xbps-install -y bluetuith gpsd
 
 	# Recon
-	#xbps-install -y aircrack-ng bettercap ettercap masscan tcpdump termshark wireshark
+	xbps-install -y aircrack-ng bettercap bandwhich bpfmon ettercap kismet masscan tcpdump termshark wireshark
 
 	# Radio
 	#xbps-install -y airspy chirp CubicSDR gnuradio gqrx inspectrum librtlsdr rtl-sdr rx_tools SoapyRTLSDR SDRPlusPlus
@@ -180,7 +191,6 @@ setup_fun() {
 	cargo build --release --manifest-path $BUILD/bouncinamation/Cargo.toml # Need to install
 
 	go install github.com/maaslalani/confetty@latest  # Animations
-	go install github.com/maaslalani/gambit@latest    # Chess
 	go install github.com/maxpaulus43/go-sweep@latest # Minesweeper
 }
 
@@ -196,6 +206,50 @@ setup_builds() {
 	patch $BUILD/dwm/drw.c $BUILD/dwm/patch_nosquares.diff
 	patch $BUILD/dwm/dwm.c $BUILD/dwm/patch_notitles.diff
 	sudo make -C $BUILD/dwm clean install
+}
+
+
+setup_user_packages() {
+	wget -O $HOME/.local/bin/cursor https://downloader.cursor.sh/linux/appImage/x64
+	chmod u+x $HOME/.local/bin/cursor
+
+	VERSION=$(curl -s https://api.github.com/repos/obsidianmd/obsidian-releases/releases/latest | jq -r .tag_name  | cut -c2-)
+	wget -O $HOME/.local/bin/obsidian https://github.com/obsidianmd/obsidian-releases/releases/download/v${VERSION}/Obsidian-${VERSION}.AppImage
+	chmod u+x $HOME/.local/bin/obsidian
+
+	VERSION=$(curl -s https://api.github.com/repos/boxdot/gurk-rs/releases/latest | jq -r .tag_name)
+	wget -O $HOME/.local/bin/gurk https://github.com/boxdot/gurk-rs/releases/download/${VERSION}/gurk-x86_64-unknown-linux-gnu.tar.gz
+	chmod u+x $HOME/.local/bin/gurk
+
+	TEMP=$(mktemp -d)
+	wget -O $TEMP/zed.tar.gz https://zed.dev/api/releases/stable/latest/zed-linux-x86_64.tar.gz
+	tar -xzf $TEMP/zed.tar.gz -C $TEMP
+	mv $TEMP/zed.app/bin/zed $HOME/.local/bin/zed
+	rm -rf $TEMP
+
+	mkdir -p $HOME/.config/pip && printf "[global]\nbreak-system-packages = true" > $HOME/.config/pip/pip.conf
+	pip install --user asyncwhois ecs elasticsearch meshtastic scalene
+
+	cargo install binsider
+	cargo install git-dumper
+	cargo install netscanner
+
+	go install -v github.com/nxtrace/NTrace-core@latest
+	go install -v github.com/projectdiscovery/asnmap/cmd/asnmap@latest
+	go install -v github.com/projectdiscovery/chaos-client/cmd/chaos@latest
+	go install -v github.com/projectdiscovery/cvemap/cmd/cvemap@latest
+	go install -v github.com/projectdiscovery/dnsx/cmd/dnsx@latest
+	go install -v github.com/projectdiscovery/httpx/cmd/httpx@latest
+	go install -v github.com/projectdiscovery/katana/cmd/katana@latest
+	go install -v github.com/projectdiscovery/mapcidr/cmd/mapcidr@latest
+	go install -v github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest
+	go install -v github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest
+	go install -v github.com/projectdiscovery/tlsx/cmd/tlsx@latest
+
+	git clone https://github.com/projectdiscovery/nuclei-templates.git $HOME/dev/git/mirror/nuclei-templates
+
+	git clone https://github.com/blechschmidt/massdns.git $HOME/dev/git/mirror/massdns
+	make -C $HOME/dev/git/mirror/massdns && sudo make -C $HOME/dev/git/mirror/massdns install
 }
 
 

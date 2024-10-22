@@ -1,45 +1,66 @@
 #!/bin/bash
-# enter the zoid (zfs on root with zraid) - developed by acidvegas (https://git.acid.vegas/void)
-#      boot: https://github.com/leahneukirchen/hrmpf
-# reference: https://docs.zfsbootmenu.org/en/v2.2.x/guides/void-linux/uefi.html
-#            https://docs.zfsbootmenu.org/en/v2.3.x/guides/void-linux/uefi.html (do we need to make any updates?)
+# enter the zoid (zfs on root with raidz) - developed by acidvegas (https://git.acid.vegas/void)
 
 set -xev
 
 # Configuration
 HOSTNAME=blackhole
 BOOT_DRIVE=/dev/sde # Use the internal USB drive for the boot partition
-POOL_DRIVES="/dev/sda /dev/sdb /dev/sdc /dev/sdd" # Verify these with lsblk before running
+POOL_DRIVES="/dev/sda /dev/sdb /dev/sdc /dev/sdd" # Drives used for the ZFS pool
+RAIDZ_PARITY="1" # Number of drives to use for the RAID-Z parity (must be 1 or greater otherwise why are you using ZFS?)
 
+checks() {
+	# Check if the system is using UEFI or BIOS
+	if [ ! -d /sys/firmware/efi ]; then
+		echo "System must be using UEFI"
+		exit 1
+	fi
 
-convert_pool_drives() {
-    local devices=$1
-    local by_id_drives=""
+	# Check if all drives exist and are valid
+	for d in $BOOT_DRIVE $POOL_DRIVES; do
+		if [ ! -b $d ]; then
+			echo "Drive $d does not exist"
+			exit 1
+		fi
+	done
 
-    for dev in $devices; do
-        local device_by_id_path=""
-        for id in /dev/disk/by-id/*; do
-            if [ "$(readlink -f "$id")" = "$(readlink -f "$dev")" ] && ! [[ $id =~ .*-part[0-9]+ ]]; then
-                device_by_id_path="$id"
-                break
-            fi
-        done
-        by_id_drives+="${device_by_id_path} "
-    done
+	if [ $RAIDZ_PARITY -lt 1 ]; then
+		echo "RAID-Z parity must be 1 or greater"
+		exit 1
+	fi
 
-    echo $by_id_drives
+	# Double check the drives are correct
+	echo "Current block devices:" && lsblk
+	echo "Selected boot drive: $BOOT_DRIVE"
+	echo "Selected drives for the ZFS pool: $POOL_DRIVES"
+	read -p "Are these drives correct? (y/n): " -r
+	if [ $REPLY != "y" ]; then
+		echo "Update the POOL_DRIVES configuration"
+		exit 1
+	fi
 }
 
 
 setup_zfs() {
+	# Validation
+	checks
+
+	# Install dependencies
+	xbps-install -y gptfdisk util-linux zfs
+
+	# Generate the hostid
 	source /etc/os-release
 	export ID
 	zgenhostid -f 0x00bab10c
 
+	echo "No turning back now...ZFS TIME!"
+
+	# Prepare the boot drive
 	wipefs -a $BOOT_DRIVE
 	sgdisk --zap-all $BOOT_DRIVE
 	sgdisk -n "1:1m:+1g" -t "1:ef00" "$BOOT_DRIVE"
 
+	# Prepare the ZFS pool drives
 	for d in $POOL_DRIVES; do
 		wipefs -a $d
 		sgdisk --zap-all $d
@@ -49,100 +70,116 @@ setup_zfs() {
 		fi
 	done
 
-	POOL_DRIVES=$(convert_pool_drives "$POOL_DRIVES")
-	zpool create -f -o ashift=12 -O compression=lz4 -O acltype=posixacl -O xattr=sa -O relatime=on -o autotrim=on -o compatibility=openzfs-2.1-linux -m none zroot raidz $POOL_DRIVES
+	echo "Entering a quasar cluster..."
 
+	# Create the ZFS pool
+	ZFS_POOL_DRIVES=$(echo $(for dev in $POOL_DRIVES; do find /dev/disk/by-id/ -samefile $(readlink -f "$dev") ! -name "*-part*" -print -quit; done))
+	zpool create -f -o ashift=12 -O compression=lz4 -O acltype=posixacl -O xattr=sa -O noatime=on -o autotrim=on -o compatibility=openzfs-2.1-linux -m none zroot raidz${RAIDZ_PARITY} $ZFS_POOL_DRIVES
+
+	# Create the ZFS datasets
 	zfs create -o mountpoint=none zroot/ROOT
 	zfs create -o mountpoint=/ -o canmount=noauto zroot/ROOT/$ID
 	zfs create -o mountpoint=/home zroot/home
 	zpool set bootfs=zroot/ROOT/$ID zroot
 
+	# Export and import the ZFS pool
 	zpool export zroot
 	zpool import -N -R /mnt zroot
 	zfs mount zroot/ROOT/$ID
 	zfs mount zroot/home
 
+	# Trigger udev
 	udevadm trigger
 
+	echo "Creating a black hole..."
+
+	# Install base system
 	XBPS_ARCH=x86_64 xbps-install -S -R https://mirrors.servercentral.com/voidlinux/current -r /mnt base-system
+
+	# Copy the hostid into the new system
 	cp /etc/hostid /mnt/etc
 
+	# Chroot into the new system
+	echo "Entering the matrix...make sure to run the following command to continue: ./enterthezoid chroot"
 	xchroot /mnt
 }
 
 
 setup_chroot() {
-	passwd
+	# Set the root password
+	echo "root:root" | chpasswd
 
+	# Update the package manager
 	xbps-install -Suy
 
+	# Install the non-free repository
 	xbps-install -y void-repo-nonfree
 	xbps-install -Suy
+
+	# Install & enable the intel microcode service
 	xbps-install -y intel-ucode
 	ln -sf /etc/sv/intel-ucode /etc/runit/runsvdir/default/
 
+	# Set the timezone & hardware clock
 	ln -sf /usr/share/zoneinfo/America/New_York /etc/localtime
-	ln -sf /etc/sv/dhcpcd /etc/runit/runsvdir/default/
 	hwclock --systohc
-	printf "$HOSTNAME\n" > /etc/hostname
 
+	# Set the hostname
+	echo "$HOSTNAME" > /etc/hostname
+
+	# Set the rc.conf variables
 	printf "HOSTNAME=\"$HOSTNAME\"\nHARDWARECLOCK=\"UTC\"\nTIMEZONE=\"America/New_York\"\nKEYMAP=us\n" > /etc/rc.conf
 
+	# Set the locales
 	printf "en_US.UTF-8 UTF-8\nen_US ISO-8859-1\n" > /etc/default/libc-locales
 	xbps-reconfigure -f glibc-locales
 
+	# Set the dracut configuration
 	printf "nofsck=\"yes\"\nadd_dracutmodules+=\" zfs \"\nomit_dracutmodules+=\" btrfs \"\n" > /etc/dracut.conf.d/zol.conf
 
-	xbps-install -y zfs
-	zfs set org.zfsbootmenu:commandline="quiet loglevel=4" zroot/ROOT
 
+	echo "Interstellar data de-spaghettification commencing..."
+
+	# Install the zfs package 
+	xbps-install -y zfs
+
+	# Setup & mount the boot partition
 	mkfs.vfat -F32 ${BOOT_DRIVE}1
 	BOOT_UUID=$(blkid -s UUID -o value ${BOOT_DRIVE}1)
 	echo "UUID=$BOOT_UUID /boot/efi vfat defaults 0 0" > /etc/fstab
 	mkdir -p /boot/efi
 	mount /boot/efi
 
-	# Everything below this line is a "hacky" solution to a problem I was having with the zfsbootmenu package
-	# https://github.com/zbm-dev/zfsbootmenu/issues/293
-	# The developers of zfsbootmenu are rude and unhelpful, so I had to figure this out on my own:
-	#	12:39 -- Mode #zfsbootmenu [+b *!*@big.dick.acid.vegas] by zdykstra
-	#	12:39 ◀▬▬ zdykstra has kicked acidvegas (acidvegas)
-	#	12:39 -- #zfsbootmenu: Cannot join channel (+b) - you are banned
+	echo "System is armed and dangerous"
 
-	xbps-install -S zfsbootmenu gummiboot-efistub yq
-	yq -iy '.Global.ManageImages=true | .Global.BootMountPoint="/boot/efi" | .Components.Enabled=false | .EFI.ImageDir="/boot/efi/EFI/zbm" | .EFI.Versions=false | .EFI.Enabled=true | .Kernel.CommandLine="quiet loglevel=0"' /etc/zfsbootmenu/config.yaml
-	generate-zbm
+	# Install & configure gummiboot bootloader
+	xbps-install -y gummiboot-efistub
+	gummiboot install
 
-	xbps-install -y refind
-	refind-install
-	rm /boot/refind_linux.conf
-	printf "\"Boot default\"  \"quiet loglevel=0 zbm.skip\"\n\"Boot to menu\"  \"quiet loglevel=0 zbm.show\"\n" > /boot/efi/EFI/ZBM/refind_linux.conf
+	# Create a bootloader entry
+	mkdir -p /boot/efi/loader/entries
+	printf "title   Void Linux\nlinux   /vmlinuz-linux\ninitrd  /initramfs-linux.img\noptions root=ZFS=zroot/ROOT/void rw quiet loglevel=0" > /boot/efi/loader/entries/void-linux.conf
 
-	mkdir -p /boot/efi/EFI/BOOT
-	mvrefind /boot/efi/EFI/refind /boot/efi/EFI/BOOT
-	temp=$(mktemp -d)
-	wget -O $temp/latest.tar.gz https://get.zfsbootmenu.org/latest.tar.gz
-	tar xvf $temp/latest.tar.gz -C $temp/
-	rm $temp/latest.tar.gz
-	mv $temp/zfs*/* /boot/efi/EFI/ZBM/
-	rm /boot/efi/EFI/ZBM/vmlinuz.efi
-
-	xbps-remove zfsbootmenu
+	# Reconfigure the bootloader
 	xbps-reconfigure -fa
 
+	# Exit the chroot
+	echo "Exiting the matrix...remember to run the following command to continue: ./enterthezoid final"
 	exit
 }
 
 
 
+# Check the command
 if [ "$#" -ne 1 ]; then
-	printf "usage: $0 [zfs|chroot|final]\n"
+	echo "usage: $0 [zfs|chroot|final]"
 	exit 1
 fi
 
+# Execute the command
 case "$1" in
 	zfs)    setup_zfs ;;
 	chroot) setup_chroot ;;
 	final)  umount -n -R /mnt; zpool export zroot; reboot ;;
-	*)      printf "usage: $0 [zfs|chroot|final]\n"; exit 1 ;;
+	*)      echo "usage: $0 [zfs|chroot|final]" && exit 1 ;;
 esac
