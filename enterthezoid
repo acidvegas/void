@@ -100,7 +100,7 @@ setup_zfs() {
 	cp /etc/hostid /mnt/etc
 
 	# Chroot into the new system
-	echo "Entering the matrix...make sure to run the following command to continue: ./enterthezoid chroot"
+	echo "Entering the void...make sure to run the following command to continue: ./enterthezoid chroot"
 	xchroot /mnt
 }
 
@@ -164,7 +164,7 @@ setup_chroot() {
 	xbps-reconfigure -fa
 
 	# Exit the chroot
-	echo "Exiting the matrix...remember to run the following command to continue: ./enterthezoid final"
+	echo "Exiting the void...remember to run the following command to continue: ./enterthezoid final"
 	exit
 }
 
