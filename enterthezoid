@@ -68,7 +68,7 @@ setup_zfs() {
 
 	# Create the ZFS pool (should we use noatime=on instead of relatime=on?)
 	ZFS_POOL_DRIVES=$(echo $(for dev in $POOL_DRIVES; do find /dev/disk/by-id/ -samefile $(readlink -f "$dev") ! -name "*-part*" -print -quit; done))
-	zpool create -f -o ashift=12 -O compression=lz4 -O acltype=posixacl -O xattr=sa -O relatime=on -o autotrim=on -o compatibility=openzfs-2.1-linux -m none zroot raidz $ZFS_POOL_DRIVES
+	zpool create -f -o ashift=12 -O compression=lz4 -O acltype=posixacl -O xattr=sa -O relatime=on -o autotrim=on -o compatibility=openzfs-2.1-linux -m none zroot raidz${RAIDZ_PARITY} $ZFS_POOL_DRIVES
 
 	# Create the ZFS datasets
 	zfs create -o mountpoint=none zroot/ROOT
