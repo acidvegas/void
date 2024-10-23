@@ -98,7 +98,7 @@ setup_packages() {
 	fi
 	xbps-install -y cargo checkbashisms go make patch pkg-config python3 python3-pip
 	xbps-install -y ansible aws-cli python3-aiodns python3-aiofiles python3-aiohttp python3-boto3 python3-Flask terraform
-	xbps-install -y bluetuith 
+	xbps-install -y bluetuith
 
 	# Essentials
 	if [ $REMOTE = "dropbear" ]; then
@@ -138,28 +138,26 @@ setup_packages() {
 
 
 setup_configs() {
-	wget -O $HOME/.alacritty.toml $GIT_URL/alacritty/.alacritty.toml
-	wget -O $HOME/.tmux.conf $GIT_URL/tmux/.tmux.conf
-
-	for item in bashrc bash_aliases bash_functions; do
-		wget -O $HOME/.$item $GIT_URL/bash/.$item
-	done
-
-	mkdir -p $HOME/.config/cmus && wget -O $HOME/.config/cmus/autosave $GIT_URL/cmus/autosave
+    mkdir -p $HOME/.config/alacritty/ && wget -O $HOME/.config/alacritty/alacritty.toml $GIT_URL/config/alacritty/alacritty.toml
+   	mkdir -p $HOME/.config/cmus  && wget -O $HOME/.config/cmus/autosave $GIT_URL/cmus/autosave
 	mkdir -p $HOME/.config/dunst && wget -O $HOME/.config/dunst/dunstrc $GIT_URL/dunst/dunstrc
+	mkdir -p $HOME/.config/git   && wget -O $HOME/.config/git/gitconfig $GIT_URL/config/git/gitconfig
+	mkdir -p $HOME/.config/tmux  && wget -O $HOME/.config/tmux/tmux.conf $GIT_URL/config/tmux/tmux.conf
+	mkdir -p $HOME/.config/X11/  && wget -O $HOME/.config/X11/xinitrc    $GIT_URL/config/X11/xinitrc
 
-	wget -O $HOME/.gitconfig $GIT_URL/git/.gitconfig
+	mkdir -p $HOME/.local/share/bash
+	for item in bash_aliases bash_functions bash_fun bash_recon; do
+		wget -O $HOME/.local/share/bash/$item $GIT_URL/local/share/bash/$item
+	done
+	wget -O $HOME/.bashrc $GIT_URL/.bashrc
 
-	mkdir $HOME/.gnupg && wget -O $HOME/.gnupg/gpg.conf $GIT_URL/gpg/gpg.conf
-	printf "pinentry-program /usr/bin/pinentry-curses\ndefault-cache-ttl 3600" > $HOME/.gnupg/gpg-agent.conf
-	#printf "pinentry-program /usr/bin/pinentry-dmenu\ndefault-cache-ttl 3600" > $HOME/.gnupg/gpg-agent.conf
-	chmod 700 $HOME/.gnupg && chmod 600 $HOME/.gnupg/*
+	mkdir -p $HOME/.local/share/gnupg && wget -O $HOME/.local/share/gnupg/gpg.conf $GIT_URL/local/share/gnupg/gpg.conf
+	printf "pinentry-program /usr/bin/pinentry-curses\ndefault-cache-ttl 3600" > $HOME/.local/share/gnupg/gpg-agent.conf
+	chmod 700 $HOME/.local/share/gnupg && chmod 600 $HOME/.local/share/gnupg/*
 
-	wget -O $HOME/.xinitrc $GIT_URL/xorg/.xinitrc
-
-	mkdir $HOME/.scripts
-	for SCRIPT in cmus-now gitremote irc-post-commit-hook mutag pmf shotz statusbar todo torwall; do
-		wget -O $HOME/.scripts/$SCRIPT $GIT_URL/scripts/$SCRIPT && chmod +x $HOME/.scripts/$SCRIPT
+	mkdir -p $HOME/.local/bin/scripts
+	for SCRIPT in cmus-now gitremote irc-post-commit-hook mutag pmf shotz statusbar todo; do
+		wget -O $HOME/.local/bin/scripts/$SCRIPT $GIT_URL/scripts/$SCRIPT && chmod +x $HOME/.scripts/$SCRIPT
 	done
 	wget -O $HOME/.scripts/dbc https://raw.githubusercontent.com/acidvegas/dbc/main/dbc && chmod +x $HOME/.scripts/dbc
 
