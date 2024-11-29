@@ -33,6 +33,7 @@ alias nrmcommits="git checkout --orphan latest_branch && git add -A && git commi
 alias ..="cd ../"
 alias dropkey="dropbearkey -y -f .dropbear/key | head -n 2 | tail -n 1"
 alias dump='setterm -dump 1 -file screen.dump'
+alias fzfind='grep --line-buffered --color=never -r "" * | fzf'
 alias newnym='echo -e "AUTHENTICATE \"CHANGEME\"\r\nSIGNAL NEWNYM\r\nQUIT" | nc 127.0.0.1 9051'
 alias mdcat='glow'
 alias mkgz='tar -cvzf'
@@ -44,10 +45,10 @@ alias y2m='youtube-dl --extract-audio --audio-format mp3 --audio-quality 0 -o "%
 alias up='sudo mount -o remount,rw /boot && sudo xbps-install -Su && sudo mount -o remount,ro /boot'
 
 # scripts
-alias dbc='~/.scripts/dbc'
-alias gitremote='~/.scripts/gitremote'
-alias irc2ansi='python3 ~/.scripts/irc2ansi.py'
-alias mutag='~/.scripts/mutag'
-alias pass='~/.scripts/pass'
-alias shotz='~/.scripts/shotz'
-alias todo='~/.scripts/todo'
+alias dbc='~/.local/bin/scripts/dbc'
+alias gitremote='~/.local/bin/scripts/gitremote'
+alias irc2ansi='python3 ~/.local/bin/scripts/irc2ansi.py'
+alias mutag='~/.local/bin/scripts/mutag'
+alias pass='~/.local/bin/scripts/pass'
+alias shotz='~/.local/bin/scripts/shotz'
+alias todo='~/.local/bin/scripts/todo'

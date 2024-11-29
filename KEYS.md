@@ -1,16 +1,18 @@
 # DWM
-| Key              | Description                   |
-| ---------------- | ----------------------------- |
-| `W + h`          | Toggle statusbar              |
-| `W + k`          | Kill window                   |
-| `W + q`          | Quit                          |
-| `W + r`          | Dmenu                         |
-| `W + #`          | Switch to nth workspace       |
-| `W + s + #`      | Move program to nth workspace |
-| `W + Enter`      | Spawn a terminal              |
-| `W + Print`      | Take a scrot                  |
-| `W + Down/Up`    | Inc/Dec vertical  layout      |
-| `W + Left/Right` | Inc/Dec horizonal layout      |
+| Key                    | Description                   |
+| ---------------------- | ----------------------------- |
+| `W + h`                | Toggle statusbar              |
+| `W + k`                | Kill window                   |
+| `W + q`                | Quit                          |
+| `W + r`                | Dmenu                         |
+| `W + #`                | Switch to nth workspace       |
+| `W + Shift + #`        | Move program to nth workspace |
+| `W + Enter`            | Spawn a terminal              |
+| `W + Print`            | Take a scrot                  |
+| `W + Down/Up`          | Inc/Dec vertical  layout      |
+| `W + Left/Right`       | Inc/Dec horizonal layout      |
+| `W + Click Drag`       | Move window                   |
+| `W + Right Click Drag` | Resize window                 |
 
 # TMUX
 | Key                  | Description                   |

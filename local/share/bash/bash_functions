@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # .bash_functions - developed by acidvegas (https://git.acid.vegas/void)
 
 cheat() {
@@ -17,7 +17,7 @@ color() {
 cctain() {
 	NAME=$1
 	incus storage create $NAME-pool dir
-	incus launch images:debian/12 $NAME-container -s $NAME-pool	
+	incus launch images:debian/12 $NAME-container -s $NAME-pool
 	incus config set $NAME-container boot.autostart true
 	sleep 10 # Delay to allow the container to start and get an IP address from the DHCP server
 	incus exec $NAME-container -- apt update  -y
@@ -27,6 +27,18 @@ cctain() {
 	incus exec $NAME-container -- journalctl --vacuum-time=1d
 	incus exec $NAME-container -- sh -c 'printf "[Journal]\nStorage=volatile\nSplitMode=none\nRuntimeMaxUse=500K" > /etc/systemd/journald.conf'
 	incus exec $NAME-container -- systemctl restart systemd-journald
+}
+
+fkill() {
+    local pid
+    if [ "$UID" != "0" ]; then
+        pid=$(ps -f -u $UID | sed 1d | fzf -m | awk '{print $2}')
+    else
+        pid=$(ps -ef | sed 1d | fzf -m | awk '{print $2}')
+    fi
+    if [ "x$pid" != "x" ]; then
+        echo $pid | xargs kill -${1:-9}
+    fi
 }
 
 extract() {

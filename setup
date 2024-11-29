@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # void setup script - developed by acidvegas (https://git.acid.vegas/void)
 
 # note: After importing keys: printf "FINGERPRINTHERE:6:" | gpg --import-ownertrust
@@ -27,10 +27,8 @@ setup_root() {
 	for item in 6x11 7x12 7x14; do
 		wget -O /usr/share/kbd/consolefonts/ohsnap${item}r.psfu $GIT_URL/font/ohsnap${item}r.psfu
 	done
-	printf "\nnohook resolv.conf\n" >> /etc/dhcpcd.conf
-	#printf "\nipv4only\nnodhcp6\n" >> /etc/dhcpcd.conf # For fixing "dhcpcd: ipv6nd_sendadvertisement: Operation not permitted" error
+	#printf "\nnohook resolv.conf\n" >> /etc/dhcpcd.conf
 	echo "CGROUP_MODE=\"unified\"" >> /etc/rc.conf
-	printf "nameserver 9.9.9.9\nnameserver149.112.112.112\nnameserver 2620:fe::fe\nnameserver 2620:fe::9" > /etc/resolv.conf
 	echo "proc /proc proc defaults,hidepid=2 0 0" >> /etc/fstab && mount -o remount /proc
 	printf "set boldtext\nset minibar\nset nohelp\nset nowrap\nset quickblank\nset tabsize 4\nunbind ^J main\nset selectedcolor black,red\ninclude \"/usr/share/nano/*.nanorc\"\n" > /etc/nanorc
 	printf "\nexport HISTFILE=/dev/null\nexport LESSHISTFILE=/dev/null\nexport PYTHONHISTFILE=/dev/null\n" >> /etc/profile
@@ -50,6 +48,7 @@ setup_root() {
 		printf '#!/bin/sh\nexec 2>&1\n[ -r conf ] && . ./conf\nexec dropbear -p $LOCAL_IP:$RND_PORT -w -s -R -F' > /etc/sv/dropbear/run
 	fi
 
+	# Need to optionally enable dhcp and wpa_supplicant incase we are using ethernet
 	for item in dhcpcd incus incus-user socklog-unix nanoklogd wpa_supplicant; do
 		ln -sfv /etc/sv/$item /var/service # Use /etc/runit/runsvdir/default/ instead of /var/service if in a chroot environemnt
 	done
@@ -71,23 +70,20 @@ setup_nonfree() {
 		elif [ $GFX_DRIVER = "amd" ]; then
 			xbps-install -y mesa-dri vulkan-loader mesa-vulkan-radeon radeon-video-accel # Un-tested
 		elif [ $GFX_DRIVER = "nvidia" ]; then
-			xbps-install -y nvidia nvidia-libs nvidia-settings nvidia-xconfig # Un-tested
+			xbps-install -y nvidia nvidia-libs
 		fi
 	fi
 
 	xbps-reconfigure -f linux
-
-	xbps-install -y Signal-Desktop
 }
 
 
 setup_packages() {
-	# Un-comment to enable non-free proprietary software to be installed
 	setup_nonfree
 
 	if [ $DISPLAY_SERVER = "xorg" ]; then
 		#xbps-install -y mesa-dri # Raspberry Pi
-		xbps-install -y xorg libX11 libX11-devel libXft libXft-devel libXinerama libXinerama-devel libXrandr libXrandr-devel xbacklight xrandr
+		xbps-install -y xorg libX11 libX11-devel libXft libXft-devel libXinerama libXinerama-devel libXrandr libXrandr-devel arandr xrandr brightnessctl
 		xbps-install -y alacritty dmenu dunst firefox pinentry-dmenu redshift scrot unclutter xclip
 		xbps-install -y ohsnap-font font-unifont-bdf freefont-ttf noto-fonts-ttf noto-fonts-ttf-extra noto-fonts-cjk noto-fonts-emoji # These fonts give you the most unicode support coverage (noto)
 	fi
@@ -101,12 +97,7 @@ setup_packages() {
 	xbps-install -y bluetuith
 
 	# Essentials
-	if [ $REMOTE = "dropbear" ]; then
-		xbps-install -y dhcpcd dropbear
-	elif [ $REMOTE = "ssh" ] || [ $REMOTE = "openssh" ]; then
-		xbps-install -y dhcpcd openssh
-	fi
-	xbps-install -y curl dropbear git jq progress rsync socklog-void tmux tor tree unzip whois zip
+	xbps-install -y curl dropbear git jq openssh progress rsync socklog-void tmux tor tree unzip whois zip
 	xbps-install -y tailscale wireguard wireguard-tools wireproxy
 
 	xbps-install -y python3-zulip zulip-desktop zulip-term
@@ -114,7 +105,7 @@ setup_packages() {
 	# Raspberry Pi specific
 	#xbps-install -y rng-tools && ln -sfv /etc/sv/rngd /var/service/ && sv up rngd
 
-	xbps-install -y  glow gotify-cli gnupg2-scdaemon lxc incus incus-client incus-tools lazygit oath-toolkit websocat
+	xbps-install -y  fzf glow gotify-cli gnupg2-scdaemon lxc incus incus-client incus-tools lazygit oath-toolkit websocat
 	#xbps-install -y earlyoom && ln -sfv /etc/sv/earlyoom /var/service/
 
 	# Alternatives
@@ -130,7 +121,7 @@ setup_packages() {
 	xbps-install -y bluetuith gpsd
 
 	# Recon
-	xbps-install -y aircrack-ng bettercap bandwhich bpfmon ettercap kismet masscan tcpdump termshark wireshark
+	xbps-install -y aircrack-ng bettercap bandwhich bpfmon ettercap ghidra kismet masscan mitmproxy strace tcpdump termshark wireshark wuzz
 
 	# Radio
 	#xbps-install -y airspy chirp CubicSDR gnuradio gqrx inspectrum librtlsdr rtl-sdr rx_tools SoapyRTLSDR SDRPlusPlus
@@ -138,18 +129,21 @@ setup_packages() {
 
 
 setup_configs() {
-    mkdir -p $HOME/.config/alacritty/ && wget -O $HOME/.config/alacritty/alacritty.toml $GIT_URL/config/alacritty/alacritty.toml
-   	mkdir -p $HOME/.config/cmus  && wget -O $HOME/.config/cmus/autosave $GIT_URL/cmus/autosave
-	mkdir -p $HOME/.config/dunst && wget -O $HOME/.config/dunst/dunstrc $GIT_URL/dunst/dunstrc
-	mkdir -p $HOME/.config/git   && wget -O $HOME/.config/git/gitconfig $GIT_URL/config/git/gitconfig
-	mkdir -p $HOME/.config/tmux  && wget -O $HOME/.config/tmux/tmux.conf $GIT_URL/config/tmux/tmux.conf
-	mkdir -p $HOME/.config/X11/  && wget -O $HOME/.config/X11/xinitrc    $GIT_URL/config/X11/xinitrc
+    mkdir -p $HOME/.config/alacritty && wget -O $HOME/.config/alacritty/alacritty.toml $GIT_URL/config/alacritty/alacritty.toml
+   	mkdir -p $HOME/.config/cmus      && wget -O $HOME/.config/cmus/autosave            $GIT_URL/config/cmus/autosave
+	mkdir -p $HOME/.config/dunst     && wget -O $HOME/.config/dunst/dunstrc            $GIT_URL/config/dunst/dunstrc
+	mkdir -p $HOME/.config/git       && wget -O $HOME/.config/git/config               $GIT_URL/config/git/config
+	mkdir -p $HOME/.config/tmux      && wget -O $HOME/.config/tmux/tmux.conf           $GIT_URL/config/tmux/tmux.conf
+	mkdir -p $HOME/.config/X11       && wget -O $HOME/.config/X11/xinitrc              $GIT_URL/config/X11/xinitrc
+
+	sed -i "s|/dev/sda2|$(df $HOME | awk 'NR==2 {print $1}')|" $HOME/.config/tmux/tmux.conf
 
 	mkdir -p $HOME/.local/share/bash
 	for item in bash_aliases bash_functions bash_fun bash_recon; do
 		wget -O $HOME/.local/share/bash/$item $GIT_URL/local/share/bash/$item
 	done
 	wget -O $HOME/.bashrc $GIT_URL/.bashrc
+	echo "history -c && clear && reset" > $HOME/.bash_logout
 
 	mkdir -p $HOME/.local/share/gnupg && wget -O $HOME/.local/share/gnupg/gpg.conf $GIT_URL/local/share/gnupg/gpg.conf
 	printf "pinentry-program /usr/bin/pinentry-curses\ndefault-cache-ttl 3600" > $HOME/.local/share/gnupg/gpg-agent.conf
@@ -157,14 +151,15 @@ setup_configs() {
 
 	mkdir -p $HOME/.local/bin/scripts
 	for SCRIPT in cmus-now gitremote irc-post-commit-hook mutag pmf shotz statusbar todo; do
-		wget -O $HOME/.local/bin/scripts/$SCRIPT $GIT_URL/scripts/$SCRIPT && chmod +x $HOME/.scripts/$SCRIPT
+		wget -O $HOME/.local/bin/scripts/$SCRIPT $GIT_URL/scripts/$SCRIPT
 	done
-	wget -O $HOME/.scripts/dbc https://raw.githubusercontent.com/acidvegas/dbc/main/dbc && chmod +x $HOME/.scripts/dbc
+	wget -O $HOME/.local/bin/scripts/dbc  https://raw.githubusercontent.com/acidvegas/dbc/main/dbc
+	wget -O $HOME/.local/bin/scripts/pass https://raw.githubusercontent.com/acidvegas/pass/main/pass
+	chmod +x $HOME/.local/bin/scripts/*
 
 	mkdir -p $HOME/.local/share/fonts && wget -O $HOME/.local/share/fonts/BlockZone.ttf $GIT_URL/font/BlockZone.ttf && fc-cache -f -v
 
-	VERSION=$(curl -s https://api.github.com/repos/obsidianmd/obsidian-releases/releases/latest | jq -r .tag_name | cut -c2-)
-	wget -O $HOME/.local/bin/obsidian https://github.com/obsidianmd/obsidian-releases/releases/download/v${VERSION}/Obsidian-${VERSION}.AppImage
+	mkdir -p $HOME/.config/pip && printf "[global]\nbreak-system-packages = true" > ~/.config/pip/pip.conf
 }
 
 
@@ -172,9 +167,9 @@ setup_fun() {
 	BUILD=$HOME/dev/build
 	mkdir -p $BUILD
 
-	wget -O $HOME/.scripts/irc2ansi.py https://raw.githubusercontent.com/internet-relay-chat/archive/master/art/irc2ansi.py
-	wget -O $HOME/.scripts/bomber $GIT_URL/scripts/bomber && chmod +x $HOME/.scripts/bomber
-	wget -O $HOME/.scripts/pipes https://raw.githubusercontent.com/pipeseroni/pipes.sh/master/pipes.sh && chmod +x $HOME/.scripts/pipes
+	wget -O $HOME/.local/bin/scripts/irc2ansi.py https://raw.githubusercontent.com/internet-relay-chat/archive/master/art/irc2ansi.py
+	wget -O $HOME/.local/bin/scripts/bomber $GIT_URL/scripts/bomber && chmod +x $HOME/.local/bin/scripts/bomber
+	wget -O $HOME/.local/bin/scripts/pipes https://raw.githubusercontent.com/pipeseroni/pipes.sh/master/pipes.sh && chmod +x $HOME/.local/bin/scripts/pipes
 
 	git clone https://github.com/AngelJumbo/lavat.git $BUILD/lavat
 	sudo make -C $BUILD/lavat clean install
@@ -208,6 +203,9 @@ setup_builds() {
 
 
 setup_user_packages() {
+    VERSION=$(curl -s https://api.github.com/repos/boxdot/gurk-rs/releases/latest | jq -r .tag_name  | cut -c2-)
+    wget -O $HOME/.local/bin/gurk https://github.com/boxdot/gurk-rs/releases/download/v${VERSION}/gurk-x86_64-unknown-linux-gnu.tar.gz
+
 	wget -O $HOME/.local/bin/cursor https://downloader.cursor.sh/linux/appImage/x64
 	chmod u+x $HOME/.local/bin/cursor
 
@@ -215,22 +213,17 @@ setup_user_packages() {
 	wget -O $HOME/.local/bin/obsidian https://github.com/obsidianmd/obsidian-releases/releases/download/v${VERSION}/Obsidian-${VERSION}.AppImage
 	chmod u+x $HOME/.local/bin/obsidian
 
-	VERSION=$(curl -s https://api.github.com/repos/boxdot/gurk-rs/releases/latest | jq -r .tag_name)
-	wget -O $HOME/.local/bin/gurk https://github.com/boxdot/gurk-rs/releases/download/${VERSION}/gurk-x86_64-unknown-linux-gnu.tar.gz
-	chmod u+x $HOME/.local/bin/gurk
-
 	TEMP=$(mktemp -d)
 	wget -O $TEMP/zed.tar.gz https://zed.dev/api/releases/stable/latest/zed-linux-x86_64.tar.gz
-	tar -xzf $TEMP/zed.tar.gz -C $TEMP
-	mv $TEMP/zed.app/bin/zed $HOME/.local/bin/zed
+	tar -xzf $TEMP/zed.tar.gz -C $HOME/.local
+	ln -s $HOME/.local/zed.app/zed $HOME/.local/bin/zed
 	rm -rf $TEMP
 
-	mkdir -p $HOME/.config/pip && printf "[global]\nbreak-system-packages = true" > $HOME/.config/pip/pip.conf
+	mkdir -p $HOME/.config/pip
+	printf "[global]\nbreak-system-packages = true" > $HOME/.config/pip/pip.conf
 	pip install --user asyncwhois ecs elasticsearch meshtastic scalene
 
-	cargo install binsider
-	cargo install git-dumper
-	cargo install netscanner
+	cargo install binsider csvlens git-dumper netscanner
 
 	go install -v github.com/nxtrace/NTrace-core@latest
 	go install -v github.com/projectdiscovery/asnmap/cmd/asnmap@latest
@@ -243,8 +236,6 @@ setup_user_packages() {
 	go install -v github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest
 	go install -v github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest
 	go install -v github.com/projectdiscovery/tlsx/cmd/tlsx@latest
-
-	git clone https://github.com/projectdiscovery/nuclei-templates.git $HOME/dev/git/mirror/nuclei-templates
 
 	git clone https://github.com/blechschmidt/massdns.git $HOME/dev/git/mirror/massdns
 	make -C $HOME/dev/git/mirror/massdns && sudo make -C $HOME/dev/git/mirror/massdns install
@@ -261,3 +252,15 @@ case "$1" in
 	fun)    setup_fun     ;;
 	*)      echo "usage: $0 [root|config|build|fun]\n"; exit 1 ;;
 esac
+
+
+
+xbps-install -Syu && vkpurge rm all && xbps-install -y openssh
+>/etc/ssh/sshd_config
+printf "Port XXX\nAddressFamily inet\nListenAddress 0.0.0.0\nPasswordAuthentication no\nPrintMotd yes\nPrintLastLog no\nBanner none" > /etc/ssh/sshd_config
+ln -s /etc/sv/sshd /var/service
+nano /etc/ssh/sshd_config
+sv restart sshd
+printf "\nssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKoWLkmkbkwgivwqbzXBsIa8EbTGAEibGkX6CC/tiKZe admin@supernets.org" >> /home/acidvegas/.ssh/authorized_keys
+chown acidvegas:acidvegas /home/acidvegas/.ssh/authorized_keys
+chmod 400 /home/acidvegas/.ssh/authorized_keys

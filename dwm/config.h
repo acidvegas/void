@@ -39,8 +39,8 @@ static const char *volume_toggle[]  = { "pactl", "set-sink-mute", "0", "toggle",
 static const char *volume_down[]    = { "amixer", "-q", "set", "Master", "10-", NULL };
 static const char *volume_up[]      = { "amixer", "-q", "set", "Master", "10+", NULL };
 static const char *music_toggle[]   = { "cmus-remote", "-u", NULL };
-static const char *backlight_down[] = { "xbacklight", "-dec", "10", NULL };
-static const char *backlight_up[]   = { "xbacklight", "-inc", "10", NULL };
+static const char *backlight_down[] = { "brightnessctl", "s", "10%-", NULL };
+static const char *backlight_up[]   = { "brightnessctl", "s", "+10%", NULL };
 
 static Key keys[] = {
 	{ MODKEY, XK_Return,             spawn,      {.v = termcmd } },
@@ -59,7 +59,7 @@ static Key keys[] = {
 	{      0, XF86AudioPlay,         spawn,      {.v = music_toggle   } },
 	{      0, XF86MonBrightnessDown, spawn,      {.v = backlight_down } },
 	{      0, XF86MonBrightnessUp,   spawn,      {.v = backlight_up   } },
-	{      0, XK_Print,              spawn,      SHCMD("~/.scripts/shotz -u") },
+	{      0, XK_Print,              spawn,      SHCMD("~/.local/bin/scripts/shotz -u") },
 	TAGKEYS(  XK_1, 0)
 	TAGKEYS(  XK_2, 1)
 	TAGKEYS(  XK_3, 2)
@@ -69,6 +69,7 @@ static Key keys[] = {
 	TAGKEYS(  XK_7, 6)
 	TAGKEYS(  XK_8, 7)
 	TAGKEYS(  XK_9, 8)
+	TAGKEYS(  XK_0, 9)
 };
 
 static Button buttons[] = {

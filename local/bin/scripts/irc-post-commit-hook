@@ -4,7 +4,7 @@
 # Place this file in .git/hooks/post-commit and chmod +x
 
 # Configuration
-WEECHAT_NETWORK="irc.supernets.org"
+WEECHAT_NETWORK="supernets"
 WEECHAT_CHANNEL="#dev"
 WEECHAT_FIFO="/home/acidvegas/.local/share/weechat/weechat_fifo"
 SSH_SERVER="war"
@@ -20,7 +20,7 @@ _summary=$(git show $_hash --stat | grep -E "fil(e|es) changed" | awk '{files+=$
 _files=$(echo $_summary | cut -d'|' -f1)
 _inserts=$(echo $_summary | cut -d'|' -f2)
 _deletes=$(echo $_summary | cut -d'|' -f3)
-_ircmsg="irc.$WEECHAT_NETWORK.$WEECHAT_CHANNEL *^C14[^C11GitHub^C14]^O Commit pushed to ^C08$_name/$_repo^O (^C06$_hash^O) ^C14[^O$_files^C14|^C03$_inserts^C14|^C04$_deletes^C14]^O : $_msg"
+_ircmsg="irc.$WEECHAT_NETWORK.$WEECHAT_CHANNEL *14[11GitHub14] Commit pushed to 08$_name/$_repo (06$_hash) 14[$_files14|03$_inserts14|04$_deletes14] : $_msg"
 
 # Send the message to weechat
 echo "$_ircmsg" | ssh $SSH_SERVER tee $WEECHAT_FIFO > /dev/null

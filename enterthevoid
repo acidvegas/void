@@ -195,6 +195,7 @@ setup_chroot() {
 		cp /boot/efi/EFI/GRUB/grubx64.efi /boot/efi/EFI/boot/bootx64.efi # copy the EFI for tricking compatability
 	elif [ $BOOT_OPTION = "BIOS" ]; then
 		xbps-install grub
+		sleep 2 # I don't know why this is needed, but it is...grub-install fails and then works after running 2 seconds
 		grub-install /dev/$DRIVE
 	fi
 

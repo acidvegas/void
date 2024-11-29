@@ -74,6 +74,6 @@ mods = "Control"
 [selection]
 save_to_clipboard = true
 
-[shell]
+[terminal.shell]
 args = ["new-session"]
 program = "/usr/bin/tmux"

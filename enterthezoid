@@ -101,8 +101,8 @@ setup_chroot() {
     # Set the root password
 	echo "root:root" | chpasswd
 
-	# Update the package manager
-	xbps-install -Suy
+	# Update the package manager and install some basic packages
+	xbps-install -Suy nano wget
 
 	# Install the non-free repository
 	xbps-install -y void-repo-nonfree
@@ -121,6 +121,9 @@ setup_chroot() {
 
 	# Set the rc.conf variables
 	printf "HOSTNAME=\"$HOSTNAME\"\nHARDWARECLOCK=\"UTC\"\nTIMEZONE=\"America/New_York\"\nKEYMAP=us\n" > /etc/rc.conf
+
+	# Set nameservers
+	printf "nameserver 9.9.9.9" > /etc/resolv.conf
 
 	# Set the locales
 	printf "en_US.UTF-8 UTF-8\nen_US ISO-8859-1\n" > /etc/default/libc-locales
@@ -159,12 +162,8 @@ setup_chroot() {
         refind-install
     	rm /boot/refind_linux.conf
     	printf "\"Boot default\"  \"quiet loglevel=0 zbm.skip\"\n\"Boot to menu\"  \"quiet loglevel=0 zbm.show\"\n" > /boot/efi/EFI/ZBM/refind_linux.conf
-    	# Everything below this line is a "hacky" solution to a problem I was having with the zfsbootmenu package
-    	# https://github.com/zbm-dev/zfsbootmenu/issues/293
-    	# The developers of zfsbootmenu are rude and unhelpful, so I had to figure this out on my own:
-    	#	12:39 -- Mode #zfsbootmenu [+b *!*@big.dick.acid.vegas] by zdykstra
-    	#	12:39 ◀▬▬ zdykstra has kicked acidvegas (acidvegas)
-    	#	12:39 -- #zfsbootmenu: Cannot join channel (+b) - you are banned
+    	# Note     : Everything below this line is a "hacky" solution to a problem I was having with the zfsbootmenu package
+    	# Reference: https://github.com/zbm-dev/zfsbootmenu/issues/293
     	mkdir -p /boot/efi/EFI/BOOT
     	mvrefind /boot/efi/EFI/refind /boot/efi/EFI/BOOT
     	temp=$(mktemp -d)

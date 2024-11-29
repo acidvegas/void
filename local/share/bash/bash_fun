@@ -9,6 +9,7 @@ alias chess='chess-tui'
 alias cmatrix='cmatrix -ab -u 1 -C magenta -s'
 alias crypto="curl rate.sx"
 alias donut="curl ascii.live/donut"
+alias emoji"curl -sSL 'https://git.io/JXXO7' | fzf"
 alias fireworks='confetty fireworks'
 alias lavat='lavat -c magenta -s 10 -r 1 -R 1 -k cyan -b 20'
 alias mapscii='telnet mapscii.me'
