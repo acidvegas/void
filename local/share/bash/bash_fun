@@ -22,35 +22,35 @@ alias wh='curl wttr.in'
 
 scene() {
 	for x in $(curl -L -k -s http://www.textfiles.com/artscene/ansi/bbs/ | tr ' ' '\n' | grep HREF | tr '"' ' ' | awk '{print $2}' | grep -P "(ans|vt)" | grep -v ".png" | grep "." | shuf); do
-	    curl -L -k -s http://www.textfiles.com/artscene/ansi/bbs/$x | iconv -f 437 -t utf-8 | pv -q -L 600
+		curl -L -k -s http://www.textfiles.com/artscene/ansi/bbs/$x | iconv -f 437 -t utf-8 | pv -q -L 600
 	done
 }
 
 # Some of the commands below are from package installs or custom builds
 fun() {
-    echo "COMMAND       | DESCRIPTION"
-    echo "------------- | -----------"
-    echo "asciiquarium  | Terminal-based aquarium"
-    echo "ansi          | Play ANSI art in your terminal"
-    echo "ascii         | Play ASCII art in your terminal"
-    echo "bomber        | Bomberman in your terminal"
-    echo "busy          | Make your terminal busy"
-    echo "chess         | Play chess in your terminal"
-    echo "confetty      | Confetti in your terminal"
-    echo "cmatrix       | Matrix-style animation"
-    echo "crypto        | Show cryptocurrency rates"
-    echo "donut         | Spinning donut"
-    echo "dvd           | Bouncing DVD logo"
-    echo "fire          | Fire animation"
-    echo "fireworks     | Fireworks in your terminal"
-    echo "lavat         | Lava lamp style animation"
-    echo "mapscii       | Maps in your terminal"
-    echo "minesweeper   | Play minesweeper in your terminal"
-    echo "pipes         | Pipes in your terminal"
-    echo "pokemon       | Random Pokémon"
-    echo "scene         | Play ANSI scene art in your terminal"
-    echo "starwars      | Watch Star Wars in your terminal"
-    echo "tty-solitaire | Play solitaire in your terminal"
-    echo "wh            | Weather in your terminal"
-    echo "wipe          | Clear your terminal in style"
+	echo "COMMAND       | DESCRIPTION"
+	echo "------------- | -----------"
+	echo "asciiquarium  | Terminal-based aquarium"
+	echo "ansi          | Play ANSI art in your terminal"
+	echo "ascii         | Play ASCII art in your terminal"
+	echo "bomber        | Bomberman in your terminal"
+	echo "busy          | Make your terminal busy"
+	echo "chess         | Play chess in your terminal"
+	echo "confetty      | Confetti in your terminal"
+	echo "cmatrix       | Matrix-style animation"
+	echo "crypto        | Show cryptocurrency rates"
+	echo "donut         | Spinning donut"
+	echo "dvd           | Bouncing DVD logo"
+	echo "fire          | Fire animation"
+	echo "fireworks     | Fireworks in your terminal"
+	echo "lavat         | Lava lamp style animation"
+	echo "mapscii       | Maps in your terminal"
+	echo "minesweeper   | Play minesweeper in your terminal"
+	echo "pipes         | Pipes in your terminal"
+	echo "pokemon       | Random Pokémon"
+	echo "scene         | Play ANSI scene art in your terminal"
+	echo "starwars      | Watch Star Wars in your terminal"
+	echo "tty-solitaire | Play solitaire in your terminal"
+	echo "wh            | Weather in your terminal"
+	echo "wipe          | Clear your terminal in style"
 }

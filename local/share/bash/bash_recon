@@ -54,6 +54,23 @@ crtsh() {
 	curl -s "https://crt.sh/?q=$1&output=json" | jq -r '.[].name_value' | sort | uniq
 }
 
+shardz() {
+	[ "$#" -ne 1 ] || ! echo "$1" | grep -q '^[1-9][0-9]*/[1-9][0-9]*$' && {
+		echo "Usage: process_with_output | shardz INDEX/TOTAL" >&2
+		return 1
+	}
+
+	shard=${1%/*}
+	total=${1#*/}
+
+	[ "$shard" -gt "$total" ] && {
+		echo "Error: INDEX cannot be greater than TOTAL" >&2
+		return 1
+	}
+
+	sed -n "$shard~$total p"
+}
+
 shodan() {
 	curl https://internetdb.shodan.io/$1
 }
