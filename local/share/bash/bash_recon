@@ -55,20 +55,9 @@ crtsh() {
 }
 
 shardz() {
-	[ "$#" -ne 1 ] || ! echo "$1" | grep -q '^[1-9][0-9]*/[1-9][0-9]*$' && {
-		echo "Usage: process_with_output | shardz INDEX/TOTAL" >&2
-		return 1
-	}
-
-	shard=${1%/*}
-	total=${1#*/}
-
-	[ "$shard" -gt "$total" ] && {
-		echo "Error: INDEX cannot be greater than TOTAL" >&2
-		return 1
-	}
-
-	sed -n "$shard~$total p"
+	# Usage: shardz INDEX/TOTAL
+	# curl https://example.com/large_file.txt | shardz 1/3 | httpx -title -ip -tech-detect -json -o shard-1.json
+	awk -v n="$1" -v t="$2" 'NR % t == n'
 }
 
 shodan() {
