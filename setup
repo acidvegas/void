@@ -101,7 +101,6 @@ setup_user() {
 	mkdir -p $HOME/.config/tmux && wget -O $HOME/.config/tmux/tmux.conf $GIT_URL/config/tmux/tmux.conf
 	sed -i "s|/dev/sda2|$(df $HOME | awk 'NR==2 {print $1}')|" $HOME/.config/tmux/tmux.conf
 
-
 	# Remove any line with HISTCONTROL starting it
 	sed -i '/HISTCONTROL/d' $HOME/.bashrc
 }
