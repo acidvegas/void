@@ -45,21 +45,27 @@ extract() {
 	if [ ! -z "$1" ]; then
 		if [ -f $1 ]; then
 			case $1 in
-				*.tar.bz2) tar xvjf $1	  ;;
-				*.tar.gz)  tar xvzf $1    ;;
-				*.tar.xz)  tar xvJf $1    ;;
-				*.lzma)    unlzma $1      ;;
-				*.bz2)     bunzip2 $1     ;;
-				*.rar)     unrar x -ad $1 ;;
-				*.gz)      gunzip $1      ;;
-				*.tar)     tar xvf $1     ;;
-				*.tbz2)    tar xvjf $1    ;;
-				*.tgz)     tar xvzf $1    ;;
-				*.zip)     unzip $1       ;;
-				*.Z)       uncompress $1  ;;
-				*.7z)      7z x $1        ;;
-				*.xz)      unxz $1        ;;
-				*)         echo "$1 - unknown archive format" ;;
+				*.7z)       7z x $1          ;;
+				*.bz2)      bunzip2 $1       ;;
+				*.deb)      dpkg-deb -x $1 . ;;
+				*.gz)       gunzip $1        ;;
+				*.iso)      bsdtar -xf $1    ;;
+				*.lz4)      lz4 -d $1        ;;
+				*.lzip)     lzip -d $1       ;;
+				*.lzma)     unlzma $1        ;;
+				*.rar)      unrar x -ad $1   ;;
+				*.tar)      tar xvf $1       ;;
+				*.tar.bz2)  tar xvjf $1      ;;
+				*.tar.gz)   tar xvzf $1      ;;
+				*.tar.xz)   tar xvJf $1      ;;
+				*.tbz2)     tar xvjf $1      ;;
+				*.tgz)      tar xvzf $1      ;;
+				*.xpi)      unzip $1         ;;
+				*.xz)       unxz $1          ;;
+				*.Z)        uncompress $1    ;;
+				*.zip)      unzip $1         ;;
+				*.zst)      unzstd $1        ;;
+				*)          echo "$1 - unknown archive format" ;;
 			esac
 		else
 			echo "$1 - file does not exist"
@@ -84,17 +90,6 @@ mntusb() {
 	sudo mount $1 /mnt -o uid=$(id -u),gid=$(id -g)
 }
 
-repo() {
-	if [ ! -z "$1" ]; then
-		for d in $(find $HOME/dev/git -type d -name mirrors -prune -o -type d -name .git -print); do
-			r=$(basename $(dirname $d))
-			if [ $1 = $r ]; then
-				cd $d
-			fi
-		done
-	fi
-}
-
 qr() {
 	curl qrenco.de/$1
 }
@@ -102,16 +97,3 @@ qr() {
 rnd() {
 	cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w $1 | head -n 1
 }
-
-backup() {
-	DATA="dev dl doc media .gnupg .ssh .bogoya"
-	DEST=backup/main
-	for d in $DATA; do
-		rsync -avzh --progress --delete $HOME/$d blackbox:$DEST
-	done
-}
-
-# Legacy comand for setting terminal titles in tabbed, might play with this ANSI escape later...
-#title() {
-#	echo -ne "\033]0;$1\007"
-#}

@@ -3,30 +3,23 @@
 	mclone = clone --depth=1
 	stats = diff --stat
 [color]
-	diff = auto
-	status = auto
-	branch = auto
-	interactive = auto
 	ui = true
-	pager = true
 [commit]
 	gpgSign = true
 [core]
 	editor = nano
 	pager = delta
 [diff]
-    colorMoved = default
+	colorMoved = default
 [interactive]
-    diffFilter = delta --color-only
+	diffFilter = delta --color-only
 [merge]
-    conflictstyle = diff3
+	conflictstyle = diff3
 [user]
-	signingkey = 441EB0F297E0DCF0AEF2F711EF4B922DB85DC9DE
+	signingkey = CHANGEME
 	name = acidvegas
 	email = acid.vegas@acid.vegas
 [pull]
 	ff = only
 [delta]
-    navigate = true
-    light = false
-
+	navigate = true

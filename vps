@@ -1,0 +1,54 @@
+#!/bin/sh
+# VPS Setup Script - Developed by acidvegas (https://git.acid.vegas)
+
+# Check if running as root
+[ "$(id -u)" -ne 0 ] && echo "error: must be run as root" && exit 1
+
+# Set xtrace, exit on error, & verbose mode
+set -xev
+
+GIT_URL="https://raw.githubusercontent.com/acidvegas/void/master"
+
+# Configuration
+USERNAME="acidvegas"
+HOSTNAME="vps"
+PUBKEY="ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJ/fz4INjgCmSZOUiE9HL3+YRalyF/ptk1+qybcBCwUp"
+
+# Update system packages
+apt update && apt upgrade -y && apt autoremove -y && apt clean
+
+# Install essential packages
+apt install -y curl dnsutils gcc git htop jq make nano ncdu net-tools python3 python-pip rsync screen sudo wget
+
+# Install Docker
+curl -fsSL https://get.docker.com | sh
+
+# Create user
+useradd -m -s /bin/bash $USERNAME && gpasswd -a $USERNAME docker && passwd $USERNAME
+
+# Setup hostname
+hostnamectl set-hostname $HOSTNAME
+
+# Setup time
+timedatectl set-timezone UTC && timedatectl set-ntp true
+
+# Setup Bash
+printf "[[ \$- != *i* ]] && return\nshopt -s checkwinsize\nexport EDITOR=nano\nexport VISUAL=nano\nexport HISTFILE=/dev/null\nexport HISTFILESIZE=0\nexport HISTSIZE=100\nexport LESSHISTFILE=/dev/null\nexport PYTHONHISTFILE=/dev/null" > /etc/bash.bashrc
+
+# Setup Nano
+printf "set boldtext\nset nohelp\nset nowrap\nset quickblank\nset tabsize 4\nunbind ^J main\nset selectedcolor black,red\ninclude \"/usr/share/nano/*.nanorc\"" > /etc/nanorc
+
+# Setup Journal
+printf "[Journal]\nStorage=volatile\nSplitMode=none\nRuntimeMaxUse=500K" > /etc/systemd/journald.conf
+systemctl stop systemd-journald && rm -rf /var/log/journal && systemctl start systemd-journald
+
+# Setup SSH
+RANDOM_PORT=$(shuf -i 1024-65535 -n 1)
+printf "AuthenticationMethods publickey\nBanner /etc/issue\nClientAliveInterval 0\nDisableForwarding yes\nPermitRootLogin no\nPort $RANDOM_PORT\nPrintLastLog no" > /etc/ssh/sshd_config
+mkdir -p $HOME/.ssh && echo $PUBKEY > $HOME/.ssh/authorized_keys && chmod 700 $HOME/.ssh && chown -R $USERNAME $HOME/.ssh && chmod 400 $HOME/.ssh/authorized_keys
+echo "SSH Port: $RANDOM_PORT"
+
+# Setup MOTD
+git clone --depth 1 https://github.com/bartobri/no-more-secrets /tmp/nms && make -C /tmp/nms clean all install && rm -rf /tmp/nms
+printf "clear && ((echo && printf \"   E N T E R   T H E   V O I D\n\"  && echo) | nms -af red) && cat /etc/motd" > /etc/profile.d/motd.sh && chmod +x /etc/profile.d/motd.sh
+wget -O /etc/motd $GIT_URL/local/share/art/supernets.txt

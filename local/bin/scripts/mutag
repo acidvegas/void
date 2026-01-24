@@ -1,13 +1,30 @@
-#!/bin/sh
+#!/bin/bash
 # mutag - developed by acidvegas (https://git.acid.vegas/void)
 # removes all metadata & album art from mp3 files and sets the artist and title based on the directory and filename
-# requires: id3v2 python-eyed3
-find $HOME/music -type f | while read SONG; do
+
+command -v eyeD3 >/dev/null 2>&1 || { echo "eyeD3 is not installed (sudo apt install -y eyed3)"; exit 1; }
+
+find "$HOME/Music" -type f -iname '*.mp3' -print0 | while IFS= read -r -d '' SONG; do
 	DIR=$(dirname "$SONG")
 	ARTIST=$(basename "$DIR")
 	TITLE=$(basename "$SONG" .mp3)
-	echo "$DIR | $ARTIST | $TITLE"
-	eyeD3 --remove-all-images "$SONG"
-	id3v2 --delete-all "$SONG"
-	id3v2 --artist "$ARTIST" --song "$TITLE" -2 "$SONG"
+
+	SHOW_DIR="Music/$(dirname "${SONG#"$HOME/Music/"}")"
+
+	GENRE=$(eyeD3 "$SONG" 2>/dev/null | sed -n 's/.*genre:[[:space:]]*//p' | head -n 1 | sed -E 's/( \(id[^)]*\))+$//')
+
+	if [ -n "$GENRE" ]; then
+		eyeD3 --remove-all --remove-all-images --to-v2.4 --artist "$ARTIST" --title "$TITLE" --genre "$GENRE" "$SONG" >/dev/null 2>&1
+	else
+		eyeD3 --remove-all --remove-all-images --to-v2.4 --artist "$ARTIST" --title "$TITLE" "$SONG" >/dev/null 2>&1
+	fi
+
+	RC=$?
+
+	if [ "$RC" -eq 0 ]; then
+		printf "\033[32m✅\033[0m \033[36m%s\033[0m | \033[35m%s\033[0m | \033[33m%s\033[0m | \033[34m%s\033[0m\n" "$SHOW_DIR" "$ARTIST" "$TITLE" "$GENRE"
+	else
+		REASON=$(eyeD3 --remove-all --remove-all-images --to-v2.4 --artist "$ARTIST" --title "$TITLE" "$SONG" 2>&1 | head -n 1 | tr -d '\r')
+		printf "\033[31m❌ %s | %s | %s | %s | %s\033[0m\n" "$SHOW_DIR" "$ARTIST" "$TITLE" "$GENRE" "$REASON"
+	fi
 done

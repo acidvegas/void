@@ -1,5 +1,0 @@
-#!/bin/sh
-# cmus 'now playing' notifications in dunst - developed by acidvegas (https://git.acid.vegas/void)
-artist=`cmus-remote -Q | grep --text '^tag artist' | sed '/^tag artistsort/d' | awk '{gsub("tag artist ", "");print}'`
-title=`cmus-remote  -Q | grep --text '^tag title'  | sed -e 's/tag title //'  | awk '{gsub("tag title ",  "");print}'`
-notify-send "♫ $artist - $title"

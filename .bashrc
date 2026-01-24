@@ -1,21 +1,29 @@
-[[ $- != *i* ]] && return
-
+# Set locales
 export LC_CTYPE=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
 
-export GNUPGHOME="$HOME/.local/share/gnupg"
+# Set GPG TTY
 export GPG_TTY=$(tty)
 
-export GOPATH=$HOME/dev/go
+# Custom paths
+export ANSIBLE_HOME="$HOME/.local/share/ansible"
+export ANSIBLE_LOCAL_TEMP="$HOME/.cache/ansible/tmp"
+export ANSIBLE_REMOTE_TEMP="$HOME/.cache/ansible/tmp"
 export CARGO_HOME=$HOME/dev/cargo
-export PATH=$PATH:/opt:$HOME/.local/bin:$HOME/dev/go/bin:$HOME/dev/cargo/bin:$GOPATH/bin
-
+export GNUPGHOME="$HOME/.local/share/gnupg"
+export GOPATH=$HOME/dev/go
 export XINITRC="$HOME/.config/X11/xinitrc"
+export WINEPREFIX="$HOME/.config/wine"
 
+# Define paths
+export PATH=$PATH:/opt:$HOME/.local/bin:$CARGO_HOME/bin:$GOPATH/bin:$HOME/.local/bin/scripts
+
+# Source all bash files in the .local/share/bash directory
 for item in $(ls $HOME/.local/share/bash); do
     source $HOME/.local/share/bash/$item
 done
 
+# Prompt based on if the user is root or not
 if [ "$(id -u)" -eq 0 ]; then
     export PS1="\e[38;5;237m\T\e[0m \e[38;5;196m\u@\h\e[0m \e[38;5;226m\w \e[0m: "
 else

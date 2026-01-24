@@ -3,19 +3,14 @@
 
 alias ansi='python3 ~/.scripts/irc2ansi.py ~/dev/git/ircart/ircart/ircart/ansi'
 alias ascii='python3 ~/.scripts/irc2ansi.py ~/dev/git/ircart/ircart/ircart'
-alias bomber='sh $HOME/.scripts/bomber'
 alias busy="cat /dev/urandom | hexdump -C | grep 'ca fe'"
-alias chess='chess-tui'
 alias cmatrix='cmatrix -ab -u 1 -C magenta -s'
 alias crypto="curl rate.sx"
 alias donut="curl ascii.live/donut"
-alias emoji"curl -sSL 'https://git.io/JXXO7' | fzf"
-alias fireworks='confetty fireworks'
+alias emoji="curl -sSL 'https://git.io/JXXO7' | fzf"
 alias lavat='lavat -c magenta -s 10 -r 1 -R 1 -k cyan -b 20'
 alias mapscii='telnet mapscii.me'
-alias minesweeper='go-sweep'
 alias rmatrix='cmatrix -ab -u 1 -C red'
-alias pipes='sh $HOME/.scripts/pipes'
 alias pokemon='curl pkmn.li'
 alias starwars='telnet towel.blinkenlights.nl'
 alias wh='curl wttr.in'
@@ -33,20 +28,14 @@ fun() {
 	echo "asciiquarium  | Terminal-based aquarium"
 	echo "ansi          | Play ANSI art in your terminal"
 	echo "ascii         | Play ASCII art in your terminal"
-	echo "bomber        | Bomberman in your terminal"
 	echo "busy          | Make your terminal busy"
-	echo "chess         | Play chess in your terminal"
-	echo "confetty      | Confetti in your terminal"
 	echo "cmatrix       | Matrix-style animation"
 	echo "crypto        | Show cryptocurrency rates"
 	echo "donut         | Spinning donut"
 	echo "dvd           | Bouncing DVD logo"
 	echo "fire          | Fire animation"
-	echo "fireworks     | Fireworks in your terminal"
 	echo "lavat         | Lava lamp style animation"
 	echo "mapscii       | Maps in your terminal"
-	echo "minesweeper   | Play minesweeper in your terminal"
-	echo "pipes         | Pipes in your terminal"
 	echo "pokemon       | Random Pokémon"
 	echo "scene         | Play ANSI scene art in your terminal"
 	echo "starwars      | Watch Star Wars in your terminal"
