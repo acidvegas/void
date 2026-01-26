@@ -17,7 +17,7 @@ pkg update && pkg upgrade -y && pkg autoremove -y && pkg clean
 pkg install -y ansible cmake make python3 python3-pip termux-api
 
 # Install essential packages
-pkg install -y curl cmatrix fzf git jq nano netcat-openbsd nmap oathtool progress rsync tmux tree unzip wget whois zip
+pkg install -y curl cmatrix fzf git grc jq nano netcat-openbsd nmap oathtool progress rsync tmux tree unzip wget whois zip
 
 # Setup Nano
 printf "set boldtext\nset minibar\nset nohelp\nset nowrap\nset quickblank\nset tabsize 4\nunbind ^J main\nunbind ^L main\nset selectedcolor black,red\ninclude \"$PREFIX/share/nano/*.nanorc\"\n" > ~/.nanorc
