@@ -11,6 +11,7 @@ GIT_URL="https://raw.githubusercontent.com/acidvegas/void/master"
 GPG_ID=$(gpg --list-keys --with-colons acidvegas | awk -F: '$1=="fpr"{print $10; exit}')
 HOSTNAME="deathstar"
 
+
 setup_packages() {
 	# Install GUI dependant packages
 	sudo apt install -y firefox kitty redshift
@@ -45,6 +46,7 @@ setup_packages() {
 	git clone --depth 1 https://github.com/ricoriedel/wipe      /tmp/wipe  && sudo cargo build --release --manifest-path /tmp/wipe/Cargo.toml && rm -rf /tmp/wipe
 }
 
+
 setup_root() {
 	# Setup hostname
 	hostnamectl set-hostname $HOSTNAME
@@ -59,6 +61,7 @@ setup_root() {
 	printf "Defaults lecture = always\nDefaults lecture_file = /etc/sudoers.d/sudoers.lecture\nroot ALL=(ALL) ALL\n%%sudo ALL=(ALL) ALL\n" | sudo tee /etc/sudoers > /dev/null
 	printf "\n\033[1m     \033[32m\"Bee\" careful    \033[34m__\n       \033[32mwith sudo!    \033[34m// \ \n                     \\\\\\_/ \033[33m//\n   \033[35m''-.._.-''-.._.. \033[33m-(||)(')\n                     '''\033[0m\n" | sudo tee /etc/sudoers.d/sudoers.lecture > /dev/null
 }
+
 
 setup_user() {
 	# Setup Bash
@@ -125,9 +128,7 @@ setup_user() {
 	# Setup Tmux
 	mkdir -p $HOME/.config/tmux && wget -O $HOME/.config/tmux/tmux.conf $GIT_URL/config/tmux/tmux.conf
 	wget -O $HOME/.local/bin/tmux-session-menu $GIT_URL/local/bin/tmux-session-menu && chmod u+x $HOME/.local/bin/tmux-session-menu
-
-	# Remove any line with HISTCONTROL starting it
-	
+}
 
 [ $# -eq 0         ] && echo "Usage: setup <packages|root|user>" && exit 1
 [ $1 != "packages" ] && [ $1 != "root" ] && [ $1 != "user" ] && echo "Invalid argument: $1" && exit 1
