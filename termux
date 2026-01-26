@@ -29,6 +29,7 @@ for item in bash_aliases bash_functions bash_fun bash_recon; do
 done
 wget -O $HOME/.bashrc $GIT_URL/.bashrc
 echo "export EDITOR=nano\nexport VISUAL=nano\nexport HISTCONTROL=ignoredups\nexport HISTFILE=/dev/null\nexport HISTFILESIZE=0\nexport HISTSIZE=100\nexport LESSHISTFILE=/dev/null\nexport PYTHONHISTFILE=/dev/null" >> $HOME/.bashrc
+echo "export TZ=America/New_York" > $HOME/.bashrc
 echo "export PS1=\"\[\e[38;5;141m\]\T\[\e[0m\] \[\e[38;5;81m\]\w\[\e[0m\]: \"" >> $HOME/.bashrc
 
 # Setup GPG

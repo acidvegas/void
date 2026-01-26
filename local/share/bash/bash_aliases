@@ -23,6 +23,10 @@ alias python='python3'
 alias vlock='vlock -a'
 alias wget='wget -q --show-progress --no-hsts'
 
+# copy & paste
+alias ctrlc="xclip -selection clipboard"
+alias ctrlv="xclip -selection clipboard -o"
+
 # eza
 alias eza='eza --icons'
 alias ezal='eza -la --icons --git --group-directories-first'

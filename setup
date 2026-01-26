@@ -14,7 +14,7 @@ HOSTNAME="deathstar"
 
 setup_packages() {
 	# Install GUI dependant packages
-	sudo apt install -y firefox kitty redshift virtualbox
+	sudo apt install -y firefox kitty redshift rpi-imager steam-installer virtualbox xclip
 	sudo apt install -y fonts-noto-core fonts-noto-extra fonts-noto-cjk fonts-noto-color-emoji fonts-dejavu fonts-freefont-ttf
 	sudo apt install -y eyed3 rhythmbox
 
