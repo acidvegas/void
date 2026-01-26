@@ -21,7 +21,10 @@ setup_packages() {
 	sudo apt install -y ansible python3 python3-pip
 
 	# Install essential packages
-	sudo apt install -y curl delta fzf git jq progress rsync tmux tree unzip whois zip
+	sudo apt install -y curl delta eza fzf git jq progress rsync tmux tree unzip whois zip
+
+	# Install font packages
+	sudo apt install -y fontforge python3-fontforge
 
 	# Install networking packages
 	sudo apt install -y tor wireguard wireguard-tools
@@ -50,7 +53,7 @@ setup_root() {
 	printf "[[ \$- != *i* ]] && return\nshopt -s checkwinsize\nexport EDITOR=nano\nexport VISUAL=nano\nexport HISTCONTROL=ignoredups\nexport HISTFILE=/dev/null\nexport HISTFILESIZE=0\nexport HISTSIZE=100\nexport LESSHISTFILE=/dev/null\nexport PYTHONHISTFILE=/dev/null" > /etc/bash.bashrc
 
 	# Setup Nano
-	printf "set boldtext\nset minibar\nset nohelp\nset nowrap\nset quickblank\nset tabsize 4\nunbind ^J main\nset selectedcolor black,red\ninclude \"/usr/share/nano/*.nanorc\"\n" | sudo tee /etc/nanorc > /dev/null
+	printf "set boldtext\nset minibar\nset nohelp\nset nowrap\nset quickblank\nset tabsize 4\nunbind ^J main\nunbind ^L main\nset selectedcolor black,red\ninclude \"/usr/share/nano/*.nanorc\"\n" | sudo tee /etc/nanorc > /dev/null
 
 	# Setup Sudoers
 	printf "Defaults lecture = always\nDefaults lecture_file = /etc/sudoers.d/sudoers.lecture\nroot ALL=(ALL) ALL\n%%sudo ALL=(ALL) ALL\n" | sudo tee /etc/sudoers > /dev/null
@@ -97,9 +100,32 @@ setup_user() {
 	# Setup Redshift
 	(crontab -l 2>/dev/null; echo "0 23 * * * DISPLAY=:0 redshift -P -O 4000"; echo "0 7 * * * DISPLAY=:0 redshift -x") | crontab -
 
+	# Download fonts
+	mkdir -p $HOME/.local/share/fonts
+	wget -O $HOME/.local/share/fonts/BlockZone.ttf $GIT_URL/local/share/fonts/BlockZone.ttf
+	fc-cache -fv
+
+	# Patch BlockZone with Nerd Font icons
+	git clone --depth 1 https://github.com/ryanoasis/nerd-fonts.git /tmp/nerd-fonts
+	cd /tmp/nerd-fonts && python3 font-patcher ~/.local/share/fonts/BlockZone.ttf --complete --makegroups 0 --out ~/.local/share/fonts
+	fc-cache -fv
+	rm -rf /tmp/nerd-fonts
+
+	# Set terminal font
+	TERMINAL_PROFILE=$(gsettings get org.gnome.Terminal.ProfilesList default | tr -d "'")
+	gsettings set org.gnome.Terminal.Legacy.Profile:/org/gnome/terminal/legacy/profiles:/:$TERMINAL_PROFILE/ font 'BlockZone Nerd Font 12'
+	gsettings set org.gnome.Terminal.Legacy.Profile:/org/gnome/terminal/legacy/profiles:/:$TERMINAL_PROFILE/ use-system-font false
+	
+	# Set terminal colors
+	dconf write /org/gnome/terminal/legacy/profiles:/:$TERMINAL_PROFILE/use-theme-colors false
+	dconf write /org/gnome/terminal/legacy/profiles:/:$TERMINAL_PROFILE/foreground-color "'#f8f8f2'"
+	dconf write /org/gnome/terminal/legacy/profiles:/:$TERMINAL_PROFILE/background-color "'#000000'"
+	dconf write /org/gnome/terminal/legacy/profiles:/:$TERMINAL_PROFILE/palette "['#21222c','#ff5555','#50fa7b','#f1fa8c','#bd93f9','#ff79c6','#8be9fd','#f8f8f2','#6272a4','#ff6e6e','#69ff94','#ffffa5','#d6acff','#ff92df','#a4ffff','#ffffff']"
+
 	# Setup Tmux
 	mkdir -p $HOME/.config/tmux && wget -O $HOME/.config/tmux/tmux.conf $GIT_URL/config/tmux/tmux.conf
-	sed -i "s|/dev/sda2|$(df $HOME | awk 'NR==2 {print $1}')|" $HOME/.config/tmux/tmux.conf
+	wget -O $HOME/.local/bin/tmux-session-menu $GIT_URL/local/bin/tmux-session-menu && chmod u+x $HOME/.local/bin/tmux-session-menu
+	#sed -i "s|/dev/sda2|$(df $HOME | awk 'NR==2 {print $1}')|" $HOME/.config/tmux/tmux.conf
 
 	# Remove any line with HISTCONTROL starting it
 	sed -i '/HISTCONTROL/d' $HOME/.bashrc

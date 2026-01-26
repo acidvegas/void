@@ -23,6 +23,11 @@ alias python='python3'
 alias vlock='vlock -a'
 alias wget='wget -q --show-progress --no-hsts'
 
+# eza
+alias eza='eza --icons'
+alias ezal='eza -la --icons --git --group-directories-first'
+alias ezat='eza --tree --icons --level=2'
+
 # random
 alias ..="cd ../"
 alias dump='setterm -dump 1 -file screen.dump'

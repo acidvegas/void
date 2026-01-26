@@ -25,7 +25,7 @@ done
 
 # Prompt based on if the user is root or not
 if [ "$(id -u)" -eq 0 ]; then
-    export PS1="\e[38;5;237m\T\e[0m \e[38;5;196m\u@\h\e[0m \e[38;5;226m\w \e[0m: "
+    export PS1="\e[38;5;61m\T\e[0m \e[38;5;203m\u@\h\e[0m \e[38;5;212m\w \e[0m: "
 else
-    export PS1="\e[38;5;237m\T\e[0m \e[38;5;41m\u@\h\e[0m \e[38;5;69m\w \e[0m: "
+    export PS1="\e[38;5;61m\T\e[0m \e[38;5;141m\u@\h\e[0m \e[38;5;117m\w \e[0m: "
 fi
