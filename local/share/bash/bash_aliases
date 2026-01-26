@@ -20,6 +20,7 @@ alias mv='mv -i'
 alias pip='pip3'
 alias progress='progress -m'
 alias python='python3'
+alias tmux='/usr/bin/tmux attach -d 2>/dev/null || /usr/bin/tmux new'
 alias vlock='vlock -a'
 alias wget='wget -q --show-progress --no-hsts'
 
@@ -37,4 +38,3 @@ alias ..="cd ../"
 alias dump='setterm -dump 1 -file screen.dump'
 alias rmcommits="git checkout --orphan new && git add -A && git commit -m 'Initial commit' && git branch -D main && git branch -m main && git push -f origin main"
 alias up='sudo apt update && sudo apt upgrade -y && sudo apt autoremove -y && sudo apt clean'
-alias pipdate='python3 -m pip install -U aiodns aiofiles aioftp aiohttp aiokafka aiormq aiosocks apv beautifulsoup4 cryptography dnspython elasticsearch flask gitpython meshtastic python-dotenv python-socks scapy tqdm websockets'
