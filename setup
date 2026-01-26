@@ -21,7 +21,7 @@ setup_packages() {
 	sudo apt install -y ansible python3 python3-pip
 
 	# Install essential packages
-	sudo apt install -y curl delta eza fzf git jq progress rsync tmux tree unzip whois zip
+	sudo apt install -y curl delta eza fzf git jq oathtool progress rsync tmux tree unzip whois zip
 
 	# Install font packages
 	sudo apt install -y fontforge python3-fontforge
@@ -67,6 +67,7 @@ setup_user() {
 		wget -O $HOME/.local/share/bash/$item $GIT_URL/local/share/bash/$item
 	done
 	wget -O $HOME/.bashrc $GIT_URL/.bashrc
+	sed -i '/HISTCONTROL/d' $HOME/.bashrc
 
 	# Setup Git
 	mkdir -p $HOME/.config/git && wget -O $HOME/.config/git/config $GIT_URL/config/git/config
@@ -89,7 +90,6 @@ setup_user() {
 	# Setup Pip
 	mkdir -p $HOME/.config/pip && printf "[global]\nbreak-system-packages = true" > ~/.config/pip/pip.conf
 	python3 -m pip install aiodns aiofiles aioftp aiohttp aiokafka aiormq aiosocks apv beautifulsoup4 cryptography dnspython elasticsearch flask gitpython meshtastic python-dotenv python-socks scapy tqdm websockets
-
 
 	# Setup Scripts
 	mkdir -p $HOME/.local/bin/scripts
@@ -125,11 +125,9 @@ setup_user() {
 	# Setup Tmux
 	mkdir -p $HOME/.config/tmux && wget -O $HOME/.config/tmux/tmux.conf $GIT_URL/config/tmux/tmux.conf
 	wget -O $HOME/.local/bin/tmux-session-menu $GIT_URL/local/bin/tmux-session-menu && chmod u+x $HOME/.local/bin/tmux-session-menu
-	#sed -i "s|/dev/sda2|$(df $HOME | awk 'NR==2 {print $1}')|" $HOME/.config/tmux/tmux.conf
 
 	# Remove any line with HISTCONTROL starting it
-	sed -i '/HISTCONTROL/d' $HOME/.bashrc
-}
+	
 
 [ $# -eq 0         ] && echo "Usage: setup <packages|root|user>" && exit 1
 [ $1 != "packages" ] && [ $1 != "root" ] && [ $1 != "user" ] && echo "Invalid argument: $1" && exit 1

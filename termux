@@ -1,0 +1,54 @@
+#!/bin/bash
+# termux setup script - developed by acidvegas (https://git.acid.vegas/void)
+
+# Set xtrace, exit on error, & verbose mode
+set -xev
+
+# Configuration
+GIT_URL="https://raw.githubusercontent.com/acidvegas/void/master"
+
+# Select repository mirrors
+termux-change-repo
+
+# Update system packages
+pkg update && pkg upgrade -y && pkg autoremove -y && pkg clean
+
+# Install development packages
+pkg install -y ansible cmake make python3 python3-pip termux-api
+
+# Install essential packages
+pkg install -y curl cmatrix fzf git jq nano netcat-openbsd nmap oathtool progress rsync tmux tree unzip wget whois zip
+
+# Setup Nano
+printf "set boldtext\nset minibar\nset nohelp\nset nowrap\nset quickblank\nset tabsize 4\nunbind ^J main\nunbind ^L main\nset selectedcolor black,red\ninclude \"$PREFIX/share/nano/*.nanorc\"\n" > ~/.nanorc
+
+# Setup Bash
+mkdir -p $HOME/.local/share/bash
+for item in bash_aliases bash_functions bash_fun bash_recon; do
+	wget -O $HOME/.local/share/bash/$item $GIT_URL/local/share/bash/$item
+done
+wget -O $HOME/.bashrc $GIT_URL/.bashrc
+echo "export EDITOR=nano\nexport VISUAL=nano\nexport HISTCONTROL=ignoredups\nexport HISTFILE=/dev/null\nexport HISTFILESIZE=0\nexport HISTSIZE=100\nexport LESSHISTFILE=/dev/null\nexport PYTHONHISTFILE=/dev/null" >> $HOME/.bashrc
+echo "export PS1=\"\[\e[38;5;141m\]\T\[\e[0m\] \[\e[38;5;81m\]\w\[\e[0m\]: \"" >> $HOME/.bashrc
+
+# Setup GPG
+mkdir -p $HOME/.local/share/gnupg
+printf "pinentry-program /usr/bin/pinentry-curses\ndefault-cache-ttl 3600" > $HOME/.local/share/gnupg/gpg-agent.conf
+chmod 700 $HOME/.local/share/gnupg && chmod 600 $HOME/.local/share/gnupg/*
+
+# Setup Pip
+mkdir -p $HOME/.config/pip && printf "[global]\nbreak-system-packages = true" > ~/.config/pip/pip.conf
+python3 -m pip install aiodns aiofiles aioftp aiohttp aiokafka aiormq aiosocks apv beautifulsoup4 cryptography dnspython elasticsearch flask gitpython meshtastic python-dotenv python-socks scapy tqdm websockets
+
+# Setup Tmux
+mkdir -p $HOME/.config/tmux && wget -O $HOME/.config/tmux/tmux.conf $GIT_URL/config/tmux/tmux.conf
+wget -O $HOME/.local/bin/tmux-session-menu $GIT_URL/local/bin/tmux-session-menu && chmod u+x $HOME/.local/bin/tmux-session-menu
+
+# Setup Pass
+wget -O $HOME/.local/bin/pass https://raw.githubusercontent.com/acidvegas/pass/refs/heads/master/pass && chmod u+x $HOME/.local/bin/pass
+
+# Setup Dracula colors
+curl -fsSL https://raw.githubusercontent.com/dracula/termux/master/colors.properties | sed 's/^background=.*/background=#000000/' > ~/.termux/colors.properties && termux-reload-settings
+
+# Disable login message
+touch ~/.hushlogin
