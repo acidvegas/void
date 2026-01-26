@@ -14,7 +14,7 @@ HOSTNAME="deathstar"
 
 setup_packages() {
 	# Install GUI dependant packages
-	sudo apt install -y firefox kitty redshift
+	sudo apt install -y firefox kitty redshift virtualbox
 	sudo apt install -y fonts-noto-core fonts-noto-extra fonts-noto-cjk fonts-noto-color-emoji fonts-dejavu fonts-freefont-ttf
 	sudo apt install -y eyed3 rhythmbox
 
@@ -22,7 +22,7 @@ setup_packages() {
 	sudo apt install -y ansible python3 python3-pip
 
 	# Install essential packages
-	sudo apt install -y curl delta eza fzf git jq oathtool progress rsync tmux tree unzip whois zip
+	sudo apt install -y ca-certificates curl delta eza fzf git jq nvme-cli oathtool progress rsync smartmontools tmux tree unzip whois zip
 
 	# Install font packages
 	sudo apt install -y fontforge python3-fontforge
@@ -31,13 +31,39 @@ setup_packages() {
 	sudo apt install -y tor wireguard wireguard-tools
 
 	# Install reconnaissance packages
-	sudo apt install -y masscan mitmproxy netcat-openbsd nmap strace tcpdump termshark tshark wireshark
+	sudo apt install -y gpsd marble masscan mitmproxy netcat-openbsd nmap strace tcpdump termshark tshark wireshark
 
-	# Install tailscale
-	curl -fsSL https://tailscale.com/install.sh | sh
+	# Install snap packages
+	sudo snap install drawio ghidra zulip
 
 	# Install Docker
-	curl -fsSL https://get.docker.com | sh
+	curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+	echo "deb [signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu noble stable" | sudo tee /etc/apt/sources.list.d/docker.list >/dev/null
+
+	# Install Mullvad VPN
+	curl -fsSL https://repository.mullvad.net/deb/mullvad-keyring.asc | sudo gpg --dearmor -o /etc/apt/keyrings/mullvad-archive-keyring.gpg
+	echo "deb [signed-by=/etc/apt/keyrings/mullvad-archive-keyring.gpg] https://repository.mullvad.net/deb stable main" | sudo tee /etc/apt/sources.list.d/mullvad.list >/dev/null
+
+	# Install Obsidian
+	curl -sS https://apt.obsidian.md/obsidian.asc | sudo gpg --dearmor -o /etc/apt/keyrings/obsidian.gpg
+	echo "deb [signed-by=/etc/apt/keyrings/obsidian.gpg] https://apt.obsidian.md stable main" | sudo tee /etc/apt/sources.list.d/obsidian.list
+
+	# Install Signal
+	curl -fsSL https://updates.signal.org/desktop/apt/keys.asc | sudo gpg --dearmor -o /etc/apt/keyrings/signal-desktop-keyring.gpg
+	echo "deb [signed-by=/etc/apt/keyrings/signal-desktop-keyring.gpg] https://updates.signal.org/desktop/apt xenial main" | sudo tee /etc/apt/sources.list.d/signal-desktop.list >/dev/null
+
+	# Install Spotify
+	curl -fsSL https://download.spotify.com/debian/pubkey_C85668DF69375001.gpg | sudo gpg --dearmor -o /etc/apt/keyrings/spotify-archive-keyring.gpg
+	echo "deb [signed-by=/etc/apt/keyrings/spotify-archive-keyring.gpg] http://repository.spotify.com stable non-free" | sudo tee /etc/apt/sources.list.d/spotify.list >/dev/null
+
+	# Install Tailscale
+	curl -fsSL https://pkgs.tailscale.com/stable/ubuntu/noble.noarmor.gpg | sudo tee /etc/apt/keyrings/tailscale-archive-keyring.gpg >/dev/null
+	echo "deb [signed-by=/etc/apt/keyrings/tailscale-archive-keyring.gpg] https://pkgs.tailscale.com/stable/ubuntu noble main" | sudo tee /etc/apt/sources.list.d/tailscale.list >/dev/null
+
+	# Install packages
+	sudo apt update && sudo apt install -y docker-ce containerd.io mullvad-vpn signal-desktop spotify-client tailscale
+
+	# Add user to docker group
 	sudo gpasswd -a $USER docker
 
 	# Install Github builds
@@ -86,14 +112,9 @@ setup_user() {
 	wget -O $HOME/.local/bin/cursor https://downloader.cursor.sh/linux/appImage/x64
 	chmod u+x $HOME/.local/bin/cursor
 
-	OBSIDIAN_VERSION=$(curl -s https://api.github.com/repos/obsidianmd/obsidian-releases/releases/latest | jq -r .tag_name  | cut -c2-)
-	wget -O $HOME/.local/bin/obsidian https://github.com/obsidianmd/obsidian-releases/releases/download/v${OBSIDIAN_VERSION}/Obsidian-${OBSIDIAN_VERSION}.AppImage
-	chmod u+x $HOME/.local/bin/obsidian
-
 	# Setup Pip
 	mkdir -p $HOME/.config/pip && printf "[global]\nbreak-system-packages = true" > ~/.config/pip/pip.conf
-	python3 -m pip install aiodns aiofiles aioftp aiohttp aiokafka aiormq aiosocks apv beautifulsoup4 cryptography dnspython elasticsearch flask gitpython meshtastic python-dotenv python-socks scapy tqdm websockets
-
+	python3 -m pip install --user aiodns aiofiles aioftp aiohttp aiokafka aiormq aiosocks apv beautifulsoup4 cryptography dnspython elasticsearch flask gitpython meshtastic python-dotenv python-socks scapy tqdm websockets zulip-term
 	# Setup Scripts
 	mkdir -p $HOME/.local/bin/scripts
 	for SCRIPT in gitremote irc-post-commit-hook mutag; do
