@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# TMUX Right Status Bar Script - developed by acidvegas (https://git.acid.vegas/void)
+
+# TMUX IS FUCKING RETARDED @ VARIABLE EXPANSION & HANDLING SO WE ARE USING THIS STUPID FUCKING SCRIPT JUST FOR THE STATUS BAR
+
+cpu=$(top -bn1 2>/dev/null | awk -F'[, ]+' '/Cpu\(s\)/{for(i=1;i<=NF;i++) if($i=="id") {print int(100-$(i-1)); exit}}')
+mem=$(free 2>/dev/null | awk '/Mem:/{printf "%.0f", ($3/$2)*100; exit}')
+disk=$(df -h ~ 2>/dev/null | awk 'NR==2{print $5; exit}')
+time=$(date +'%-I:%-M')
+date_=$(date +'%-m/%-d')
+host=$(hostname -s 2>/dev/null || hostname)
+
+printf '#[fg=#282a36,bg=#50fa7b,bold] 󰻠 %s%% #[fg=#282a36,bg=#bd93f9,bold] 󰍛 %s%% #[fg=#282a36,bg=#ffb86c,bold] 󰋊 %s #[fg=#282a36,bg=#8be9fd,bold] 󰥔 %s #[fg=#282a36,bg=#f1fa8c,bold] 󰃭 %s #[fg=#282a36,bg=#6272a4,bold] %s ' "$cpu" "$mem" "$disk" "$time" "$date_" "$host"
