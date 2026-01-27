@@ -111,13 +111,24 @@ setup_user() {
 	printf "pinentry-program /usr/bin/pinentry-curses\ndefault-cache-ttl 3600" > $HOME/.local/share/gnupg/gpg-agent.conf
 	chmod 700 $HOME/.local/share/gnupg && chmod 600 $HOME/.local/share/gnupg/*
 
-	# Setup Packages
+	# Setup Claude
+	curl -fsSL https://claude.ai/install.sh | bash
+
+	# Setup Cursor
 	wget -O $HOME/.local/bin/cursor https://downloader.cursor.sh/linux/appImage/x64
 	chmod u+x $HOME/.local/bin/cursor
+
+	# Setup Codex
+	wget -O /tmp/codex-x86_64-unknown-linux-musl.tar.gz https://github.com/openai/codex/releases/latest/download/codex-x86_64-unknown-linux-musl.tar.gz
+	tar -xf /tmp/codex-x86_64-unknown-linux-musl.tar.gz
+	mv /tmp/codex-x86_64-unknown-linux-musl/codex $HOME/.local/bin/codex
+	chmod u+x $HOME/.local/bin/codex
+	rm -rf /tmp/codex-x86_64-unknown-linux-musl*
 
 	# Setup Pip
 	mkdir -p $HOME/.config/pip && printf "[global]\nbreak-system-packages = true" > ~/.config/pip/pip.conf
 	python3 -m pip install --user aiodns aiofiles aioftp aiohttp aiokafka aiormq aiosocks apv beautifulsoup4 cryptography dnspython elasticsearch flask gitpython meshtastic python-dotenv python-socks scapy tqdm websockets zulip-term
+	
 	# Setup Scripts
 	mkdir -p $HOME/.local/bin/scripts
 	for SCRIPT in gitremote irc-post-commit-hook mutag; do
