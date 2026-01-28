@@ -55,6 +55,7 @@ bindkey '^I' autosuggest-accept
 # Git info in prompt
 autoload -Uz vcs_info
 zstyle ':vcs_info:*' enable git
+zstyle ':vcs_info:*' check-for-changes true
 zstyle ':vcs_info:git:*' formats '  %b %u%c'
 zstyle ':vcs_info:git:*' actionformats '  %b (%a) %u%c'
 zstyle ':vcs_info:git:*' stagedstr ''
