@@ -108,6 +108,7 @@ setup_user() {
 	git clone --depth 1 https://github.com/zsh-users/zsh-syntax-highlighting.git $HOME/.local/share/zsh/plugins/zsh-syntax-highlighting
 	wget -O $HOME/.local/share/zsh/.zshrc $GIT_URL/local/share/zsh/.zshrc
 	touch $HOME/.local/share/zsh/.zsh_history && chmod 600 $HOME/.local/share/zsh/.zsh_history
+	chsh -s /usr/bin/zsh
 
 	# Setup Bash
 	mkdir -p $HOME/.local/share/bash
