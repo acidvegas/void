@@ -78,14 +78,14 @@ PROMPT_SHOW_UH=1
 PROMPT=$PROMPT_WITH_UH
 
 toggle-userhost() {
-  if (( PROMPT_SHOW_UH )); then
-    PROMPT_SHOW_UH=0
-    PROMPT=$PROMPT_NO_UH
-  else
-    PROMPT_SHOW_UH=1
-    PROMPT=$PROMPT_WITH_UH
-  fi
-  zle reset-prompt
+    if (( PROMPT_SHOW_UH )); then
+        PROMPT_SHOW_UH=0
+        PROMPT=$PROMPT_NO_UH
+    else
+        PROMPT_SHOW_UH=1
+        PROMPT=$PROMPT_WITH_UH
+    fi
+    zle reset-prompt
 }
 
 zle -N toggle-userhost
