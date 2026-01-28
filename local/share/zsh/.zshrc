@@ -58,16 +58,16 @@ zstyle ':vcs_info:*' enable git
 zstyle ':vcs_info:*' check-for-changes true
 zstyle ':vcs_info:git:*' formats '  %b %u%c'
 zstyle ':vcs_info:git:*' actionformats '  %b (%a) %u%c'
-zstyle ':vcs_info:git:*' stagedstr ''
-zstyle ':vcs_info:git:*' unstagedstr ''
+zstyle ':vcs_info:git:*' stagedstr ' '
+zstyle ':vcs_info:git:*' unstagedstr ' '
 precmd() { vcs_info }
 
 # Prompt based on if the user is root or not
 setopt PROMPT_SUBST
 if [[ $EUID -eq 0 ]]; then
-    PROMPT=$'%F{61}%D{%I:%M:%S}%f %F{203}%n@%m%f %F{212}%~%f%F{244}${vcs_info_msg_0_}%f : '
+    PROMPT=$'%F{61}%D{%I:%M:%S}%f %F{203}%n@%m%f %F{212}%~%f%F{244}${vcs_info_msg_0_}%f: '
 else
-    PROMPT=$'%F{61}%D{%I:%M:%S}%f %F{141}%n@%m%f %F{117}%~%f%F{244}${vcs_info_msg_0_}%f : '
+    PROMPT=$'%F{61}%D{%I:%M:%S}%f %F{141}%n@%m%f %F{117}%~%f%F{244}${vcs_info_msg_0_}%f: '
 fi
 
 # Syntax Highlighting (must be last)
