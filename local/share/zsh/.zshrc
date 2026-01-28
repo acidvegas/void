@@ -42,6 +42,7 @@ setopt HIST_IGNORE_SPACE
 
 # Enable Completion System
 ZCOMPDUMP="$ZDOTDIR/.zcompdump"
+fpath=("$ZDOTDIR/zsh-completions/src" $fpath)
 autoload -Uz compinit
 [[ -n ${ZCOMPDUMP}(#qN.mh+24) ]] && compinit -d "$ZCOMPDUMP" || compinit -C -d "$ZCOMPDUMP"
 
@@ -51,12 +52,21 @@ ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=8'
 source /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh
 bindkey '^I' autosuggest-accept
 
+# Git info in prompt
+autoload -Uz vcs_info
+zstyle ':vcs_info:*' enable git
+zstyle ':vcs_info:git:*' formats '  %b %u%c'
+zstyle ':vcs_info:git:*' actionformats '  %b (%a) %u%c'
+zstyle ':vcs_info:git:*' stagedstr ''
+zstyle ':vcs_info:git:*' unstagedstr ''
+precmd() { vcs_info }
+
 # Prompt based on if the user is root or not
 setopt PROMPT_SUBST
 if [[ $EUID -eq 0 ]]; then
-    PROMPT=$'%F{61}%D{%I:%M:%S}%f %F{203}%n@%m%f %F{212}%~%f: '
+    PROMPT=$'%F{61}%D{%I:%M:%S}%f %F{203}%n@%m%f %F{212}%~%f%F{244}${vcs_info_msg_0_}%f: '
 else
-    PROMPT=$'%F{61}%D{%I:%M:%S}%f %F{141}%n@%m%f %F{117}%~%f: '
+    PROMPT=$'%F{61}%D{%I:%M:%S}%f %F{141}%n@%m%f %F{117}%~%f%F{244}${vcs_info_msg_0_}%f: '
 fi
 
 # Syntax Highlighting (must be last)

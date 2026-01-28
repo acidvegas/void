@@ -100,8 +100,7 @@ setup_user() {
 
 	# Setup Zsh
 	mkdir -p $HOME/.local/share/zsh/plugins
-	wget -O $HOME/.local/share/zsh/plugins/zsh-autosuggestions.zsh https://raw.githubusercontent.com/zsh-users/zsh-autosuggestions/master/zsh-autosuggestions.zsh
-	git clone --depth 1 https://github.com/zsh-users/zsh-syntax-highlighting.git $HOME/.local/share/zsh/plugins/zsh-syntax-highlighting
+	git clone --depth 1 https://github.com/zsh-users/zsh-completions $HOME/.local/share/zsh/zsh-completions
 	wget -O $HOME/.local/share/zsh/.zshrc $GIT_URL/local/share/zsh/.zshrc
 	touch $HOME/.local/share/zsh/.zsh_history && chmod 600 $HOME/.local/share/zsh/.zsh_history
 	chsh -s /usr/bin/zsh
