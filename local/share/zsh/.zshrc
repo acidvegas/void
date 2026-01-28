@@ -64,11 +64,32 @@ precmd() { vcs_info }
 
 # Prompt based on if the user is root or not
 setopt PROMPT_SUBST
+
+# Two prompt variants (with and without user@host)
 if [[ $EUID -eq 0 ]]; then
-    PROMPT=$'%F{61}%D{%I:%M:%S}%f %F{203}%n@%m%f %F{212}%~%f%F{244}${vcs_info_msg_0_}%f: '
+    PROMPT_WITH_UH=$'%F{61}%D{%I:%M:%S}%f %F{203}%n@%m%f %F{212}%~%f %F{244}${vcs_info_msg_0_}%f: '
+    PROMPT_NO_UH=$'%F{61}%D{%I:%M:%S}%f %F{212}%~%f %F{244}${vcs_info_msg_0_}%f: '
 else
-    PROMPT=$'%F{61}%D{%I:%M:%S}%f %F{141}%n@%m%f %F{117}%~%f%F{244}${vcs_info_msg_0_}%f: '
+    PROMPT_WITH_UH=$'%F{61}%D{%I:%M:%S}%f %F{141}%n@%m%f %F{117}%~%f %F{244}${vcs_info_msg_0_}%f: '
+    PROMPT_NO_UH=$'%F{61}%D{%I:%M:%S}%f %F{117}%~%f %F{244}${vcs_info_msg_0_}%f: '
 fi
+
+PROMPT_SHOW_UH=1
+PROMPT=$PROMPT_WITH_UH
+
+toggle-userhost() {
+  if (( PROMPT_SHOW_UH )); then
+    PROMPT_SHOW_UH=0
+    PROMPT=$PROMPT_NO_UH
+  else
+    PROMPT_SHOW_UH=1
+    PROMPT=$PROMPT_WITH_UH
+  fi
+  zle reset-prompt
+}
+
+zle -N toggle-userhost
+bindkey '^H' toggle-userhost   # Ctrl-H
 
 # Syntax Highlighting (must be last)
 source /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
