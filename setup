@@ -79,7 +79,7 @@ setup_root() {
 	hostnamectl set-hostname $HOSTNAME
 
 	# Setup Zsh
-	printf "export EDITOR=nano\nexport VISUAL=nano\nexport LESSHISTFILE=/dev/null\nexport PYTHONHISTFILE=/dev/null" > /etc/zsh/zshenv
+	printf "export ZDOTDIR="\$HOME/.local/share/zsh"\nexport EDITOR=nano\nexport VISUAL=nano\nexport LESSHISTFILE=/dev/null\nexport PYTHONHISTFILE=/dev/null" > /etc/zsh/zshenv
 	source /etc/zsh/zshenv
 
 	# Setup Nano
