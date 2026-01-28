@@ -32,8 +32,8 @@ setopt INTERACTIVE_COMMENTS
 
 # Set History
 HISTFILE=$ZDOTDIR/.zsh_history
-HISTSIZE=50000
-SAVEHIST=50000
+HISTSIZE=1000
+SAVEHIST=1000
 setopt INC_APPEND_HISTORY
 setopt SHARE_HISTORY
 setopt HIST_IGNORE_ALL_DUPS
@@ -43,7 +43,7 @@ setopt HIST_IGNORE_SPACE
 # Enable Completion System
 ZCOMPDUMP="$ZDOTDIR/.zcompdump"
 autoload -Uz compinit
-compinit -d "$ZCOMPDUMP"
+[[ -n ${ZCOMPDUMP}(#qN.mh+24) ]] && compinit -d "$ZCOMPDUMP" || compinit -C -d "$ZCOMPDUMP"
 
 # Set Autosuggestions
 ZSH_AUTOSUGGEST_STRATEGY=(history completion)
