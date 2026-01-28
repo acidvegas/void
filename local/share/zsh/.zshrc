@@ -29,6 +29,7 @@ fi
 # Set options
 setopt NO_BEEP
 setopt INTERACTIVE_COMMENTS
+setopt CHECKWINSIZE
 
 # Set History
 HISTFILE=$ZDOTDIR/.zsh_history

@@ -78,8 +78,9 @@ setup_root() {
 	# Setup hostname
 	hostnamectl set-hostname $HOSTNAME
 
-	# Setup Bash
-	printf "[[ \$- != *i* ]] && return\nshopt -s checkwinsize\nexport EDITOR=nano\nexport VISUAL=nano\nexport HISTCONTROL=ignoredups\nexport HISTFILE=/dev/null\nexport HISTFILESIZE=0\nexport HISTSIZE=100\nexport LESSHISTFILE=/dev/null\nexport PYTHONHISTFILE=/dev/null" > /etc/bash.bashrc
+	# Setup Zsh
+	printf "export EDITOR=nano\nexport VISUAL=nano\nexport LESSHISTFILE=/dev/null\nexport PYTHONHISTFILE=/dev/null" > /etc/zsh/zshenv
+	source /etc/zsh/zshenv
 
 	# Setup Nano
 	printf "set boldtext\nset minibar\nset nohelp\nset nowrap\nset quickblank\nset tabsize 4\nunbind ^J main\nunbind ^L main\nset selectedcolor black,red\ninclude \"/usr/share/nano/*.nanorc\"\n" | sudo tee /etc/nanorc > /dev/null
@@ -94,10 +95,6 @@ setup_root() {
 
 
 setup_user() {
-	# Setup profile
-	printf '[ -n "$BASH_VERSION" ] && [ -f "$HOME/.bashrc" ] && . "$HOME/.bashrc"\nexport ZDOTDIR="$HOME/.local/share/zsh"\n' > ~/.profile
-	source $HOME/.profile
-
 	# Setup Zsh
 	mkdir -p $HOME/.local/share/zsh/plugins
 	git clone --depth 1 https://github.com/zsh-users/zsh-completions $HOME/.local/share/zsh/zsh-completions
