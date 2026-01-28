@@ -23,7 +23,7 @@ setup_packages() {
 	sudo apt install -y ansible python3 python3-pip
 
 	# Install essential packages
-	sudo apt install -y ca-certificates curl delta eza fzf git grc jq ncdu nvme-cli oathtool progress rsync smartmontools tmux tree unzip whois zip
+	sudo apt install -y ca-certificates curl delta eza fzf git grc jq ncdu nvme-cli oathtool progress rsync smartmontools tmux tree unzip whois zip zsh zsh-autosuggestions zsh-syntax-highlighting
 
 	# Install font packages
 	sudo apt install -y fontforge python3-fontforge
@@ -98,13 +98,22 @@ setup_root() {
 
 
 setup_user() {
+	# Setup profile
+	printf '[ -n "$BASH_VERSION" ] && [ -f "$HOME/.bashrc" ] && . "$HOME/.bashrc"\nexport ZDOTDIR="$HOME/.local/share/zsh"\n' > ~/.profile
+	source $HOME/.profile
+
+	# Setup Zsh
+	mkdir -p $HOME/.local/share/zsh/plugins
+	wget -O $HOME/.local/share/zsh/plugins/zsh-autosuggestions.zsh https://raw.githubusercontent.com/zsh-users/zsh-autosuggestions/master/zsh-autosuggestions.zsh
+	git clone --depth 1 https://github.com/zsh-users/zsh-syntax-highlighting.git $HOME/.local/share/zsh/plugins/zsh-syntax-highlighting
+	wget -O $HOME/.local/share/zsh/.zshrc $GIT_URL/local/share/zsh/.zshrc
+	touch $HOME/.local/share/zsh/.zsh_history && chmod 600 $HOME/.local/share/zsh/.zsh_history
+
 	# Setup Bash
 	mkdir -p $HOME/.local/share/bash
-	for item in bash_aliases bash_functions bash_fun bash_recon; do
+	for item in aliases fun functions recon; do
 		wget -O $HOME/.local/share/bash/$item $GIT_URL/local/share/bash/$item
 	done
-	wget -O $HOME/.bashrc $GIT_URL/.bashrc
-	sed -i '/HISTCONTROL/d' $HOME/.bashrc
 
 	# Setup Git
 	mkdir -p $HOME/.config/git && wget -O $HOME/.config/git/config $GIT_URL/config/git/config
@@ -120,16 +129,14 @@ setup_user() {
 	curl -fsSL https://claude.ai/install.sh | bash
 
 	# Setup Cursor
-	wget -O $HOME/.local/bin/cursor https://downloader.cursor.sh/linux/appImage/x64
+	wget -O $HOME/.local/bin/cursor https://api2.cursor.sh/updates/download/golden/linux-x64/cursor/
 	chmod u+x $HOME/.local/bin/cursor
 
 	# Setup Codex
 	wget -O /tmp/codex-x86_64-unknown-linux-musl.tar.gz https://github.com/openai/codex/releases/latest/download/codex-x86_64-unknown-linux-musl.tar.gz
-	tar -xf /tmp/codex-x86_64-unknown-linux-musl.tar.gz
-	mv /tmp/codex-x86_64-unknown-linux-musl/codex $HOME/.local/bin/codex
+	tar -xf /tmp/codex-x86_64-unknown-linux-musl.tar.gz -C /tmp && mv /tmp/codex-x86_64-unknown-linux-musl $HOME/.local/bin/codex && rm -rf /tmp/codex-x86_64-unknown-linux-musl*
 	chmod u+x $HOME/.local/bin/codex
-	rm -rf /tmp/codex-x86_64-unknown-linux-musl*
-
+	
 	# Setup Pip
 	mkdir -p $HOME/.config/pip && printf "[global]\nbreak-system-packages = true" > ~/.config/pip/pip.conf
 	python3 -m pip install --user aiodns aiofiles aioftp aiohttp aiokafka aiormq aiosocks apv beautifulsoup4 cryptography dnspython elasticsearch flask gitpython meshtastic python-dotenv python-socks scapy tqdm websockets zulip-term
@@ -137,7 +144,7 @@ setup_user() {
 	# Setup Scripts
 	mkdir -p $HOME/.local/bin/scripts
 	for SCRIPT in gitremote irc-post-commit-hook mutag; do
-		wget -O $HOME/.local/bin/scripts/$SCRIPT $GIT_URL/scripts/$SCRIPT
+		wget -O $HOME/.local/bin/scripts/$SCRIPT $GIT_URL/local/bin/scripts/$SCRIPT
 	done
 
 	# Setup Redshift
@@ -166,15 +173,13 @@ setup_user() {
 	dconf write /org/gnome/terminal/legacy/profiles:/:$TERMINAL_PROFILE/palette "['#21222c','#ff5555','#50fa7b','#f1fa8c','#bd93f9','#ff79c6','#8be9fd','#f8f8f2','#6272a4','#ff6e6e','#69ff94','#ffffa5','#d6acff','#ff92df','#a4ffff','#ffffff']"
 
 	# Setup Tmux
-	mkdir -p $HOME/.config/tmux && wget -O $HOME/.config/tmux/tmux.conf $GIT_URL/config/tmux/tmux.conf
+	mkdir -p $HOME/.config/tmux
+	wget -O $HOME/.config/tmux/tmux.conf       $GIT_URL/config/tmux/tmux.conf
 	wget -O $HOME/.local/bin/tmux-session-menu $GIT_URL/local/bin/tmux-session-menu && chmod u+x $HOME/.local/bin/tmux-session-menu
+	wget -O $HOME/.local/bin/tmux-status-right $GIT_URL/local/bin/tmux-status-right && chmod u+x $HOME/.local/bin/tmux-status-right
 
-	# Setup Nemo & remove nautilus defaults
+	# Setup Nemo
 	xdg-mime default nemo.desktop inode/directory application/x-gnome-saved-search
-	gsettings set org.gnome.desktop.background show-desktop-icons false
-	gsettings set org.gnome.nautilus.desktop home-icon-visible    false
-	gsettings set org.gnome.nautilus.desktop trash-icon-visible   false
-	gsettings set org.gnome.nautilus.desktop volumes-visible      false
 
 	# Setup Dracula GTK theme
 	echo "Download GTK theme from https://www.gnome-look.org/p/1687249 and extract to ~/.themes or /usr/share/themes"
