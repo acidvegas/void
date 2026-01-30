@@ -63,6 +63,22 @@ ip2int() {
     fi
 }
 
+nscan() {
+	target="$1"
+	[ -z "$target" ] && { echo 'usage: nscan <ip_or_range>' >&2; return 1; }
+	nmap -Pn -sS -sV -sC -A -T4 --reason --open -p- "$target"
+}
+
+mscan() {
+	range="$1"
+	ports="$2"
+	[ -z "$range" ] || [ -z "$ports" ] && { echo 'usage: mscan <cidr> <ports> [outfile]' >&2; return 1; }
+	ts="$(date +%Y-%m-%d_%H-%M-%S)"
+	safe_range="$(echo "$range" | tr '/' '_')"
+	out="${3:-./${safe_range}_${ts}.json}"
+	masscan "$range" -p"$ports" --rate=3000 --open-only  --http-user-agent "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)" --banners  --excludefile $HOME/.local/share/exclude.conf -oJ "$out"
+}
+
 shardz() {
 	# Usage: shardz INDEX/TOTAL
 	# curl https://example.com/large_file.txt | shardz 1/3 | httpx -title -ip -tech-detect -json -o shard-1.json

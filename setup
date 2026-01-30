@@ -136,6 +136,11 @@ setup_user() {
 	for SCRIPT in gitremote irc-post-commit-hook mutag; do
 		wget -O $HOME/.local/bin/scripts/$SCRIPT $GIT_URL/local/bin/scripts/$SCRIPT
 	done
+	wget -O $HOME/.local/bin/scripts/exclude.conf $GIT_URL/local/share/exclude.conf
+	wget -O $HOME/.local/bin/scripts/mdaxfr      https://raw.githubusercontent.com/acidvegas/mdaxfr/refs/heads/main/mdaxfr                 && chmod u+x $HOME/.local/bin/scripts/mdaxfr
+	wget -O $HOME/.local/bin/scripts/pass        https://raw.githubusercontent.com/acidvegas/pass/refs/heads/master/pass                   && chmod u+x $HOME/.local/bin/scripts/pass
+	wget -O $HOME/.local/bin/scripts/irc2ansi.py https://raw.githubusercontent.com/internet-relay-chat/archive/refs/heads/main/irc2ansi.py && chmod u+x $HOME/.local/bin/scripts/irc2ansi.py
+	git clone --depth 1 https://git.supernets.org/ircart/ircart.git $HOME/.local/share/ircart
 
 	# Setup Redshift
 	(crontab -l 2>/dev/null; echo "0 23 * * * DISPLAY=:0 redshift -P -O 4000"; echo "0 7 * * * DISPLAY=:0 redshift -x") | crontab -

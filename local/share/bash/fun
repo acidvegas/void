@@ -1,8 +1,8 @@
 #!/bin/sh
 # .bash_fun - developed by acidvegas (https://git.acid.vegas/void)
 
-alias ansi='python3 ~/.scripts/irc2ansi.py ~/dev/git/ircart/ircart/ircart/ansi'
-alias ascii='python3 ~/.scripts/irc2ansi.py ~/dev/git/ircart/ircart/ircart'
+alias ansi='python3 $HOME/.local/bin/scripts/irc2ansi.py $HOME/.local/share/ircart/ircart/ansi'
+alias ascii='python3 $HOME/.local/bin/scripts/irc2ansi.py $HOME/.local/share/ircart/ircart/ircart'
 alias busy="cat /dev/urandom | hexdump -C | grep 'ca fe'"
 alias cmatrix='cmatrix -ab -u 1 -C magenta -s'
 alias crypto="curl rate.sx"
