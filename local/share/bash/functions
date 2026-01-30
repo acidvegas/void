@@ -82,6 +82,36 @@ gcp() {
 	git add . && git commit -S -m "$@" && git push
 }
 
+gh() {
+	repo="$1"
+	[ -z "$repo" ] && { echo 'usage: gh user/repo or github url' >&2; return 1; }
+
+	repo="$(echo "$repo" | sed -E 's#https://github.com/##; s#/$##')"
+	api="https://api.github.com/repos/$repo"
+
+	auth=()
+	[ -n "$GITHUB_TOKEN" ] && auth=(-H "Authorization: Bearer $GITHUB_TOKEN")
+	[ -n "$GH_TOKEN" ] && auth=(-H "Authorization: Bearer $GH_TOKEN")
+
+	r="$(curl -fsSL "${auth[@]}" "$api")" || { echo "repo not found: $repo" >&2; return 2; }
+	rel="$(curl -fsSL "${auth[@]}" "$api/releases/latest" 2>/dev/null)"
+
+	jq -n \
+		--arg repo "$repo" \
+		--argjson data "$r" \
+		--argjson rel "${rel:-null}" '
+	{
+		repo: $repo,
+		description: ($data.description // ""),
+		stars: ($data.stargazers_count // 0),
+		language: ($data.language // "?")
+	}
+	+ (if $rel and $rel.tag_name then {latest_tag: $rel.tag_name} else {} end)
+	+ (if $rel and $rel.tarball_url then {latest_release: $rel.tarball_url} else {} end)
+	'
+}
+
+
 hf() {
 	curl -F file=@$1 https://hardfiles.org/ # yeah thats right motherfucker, real bay shit, for real bay motherfuckers.
 }
