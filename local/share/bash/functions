@@ -79,7 +79,7 @@ flash() {
 }
 
 gcp() {
-	git add . && git commit -S -m "$*" && git push
+	git add . && git commit -S -m "$@" && git push
 }
 
 hf() {
