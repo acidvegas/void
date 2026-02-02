@@ -23,7 +23,7 @@ setup_packages() {
 	sudo apt install -y ansible python3 python3-pip
 
 	# Install essential packages
-	sudo apt install -y ca-certificates curl delta eza fzf git grc jq ncdu nvme-cli oathtool progress rsync smartmontools tmux tree unzip whois zip zsh zsh-autosuggestions zsh-syntax-highlighting
+	sudo apt install -y ca-certificates curl delta eza fzf git grc jq ncdu nvme-cli oathtool progress rsync smartmontools tmux tree unzip whois zbar-tools zip zsh zsh-autosuggestions zsh-syntax-highlighting
 
 	# Install font packages
 	sudo apt install -y fontforge python3-fontforge
