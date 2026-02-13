@@ -31,6 +31,9 @@ done
 wget -O $HOME/.bashrc $GIT_URL/.bashrc
 sed -i '/HISTCONTROL/d' $HOME/.bashrc
 
+# Hide lastlog
+sed -i '/session    optional   pam_lastlog.so/d' /etc/pam.d/login\
+
 # Setup Nano
 printf "set boldtext\nset minibar\nset nohelp\nset nowrap\nset quickblank\nset tabsize 4\nunbind ^J main\nunbind ^L main\nset selectedcolor black,red\ninclude \"/usr/share/nano/*.nanorc\"\n" | sudo tee /etc/nanorc > /dev/null
 
@@ -40,7 +43,7 @@ sudo systemctl stop systemd-journald && sudo rm -rf /var/log/journal && sudo sys
 
 # Setup SSH
 RANDOM_PORT=$(shuf -i 1024-65535 -n 1)
-printf "AuthenticationMethods publickey\nBanner /etc/issue\nClientAliveInterval 0\nDisableForwarding yes\nPermitRootLogin no\nPort $RANDOM_PORT\nPrintLastLog no" | sudo tee /etc/ssh/sshd_config > /dev/null
+printf "AuthenticationMethods publickey\nBanner /etc/issue\nClientAliveInterval 0\nDisableForwarding yes\nPermitRootLogin prohibit-password\nPort $RANDOM_PORT\nPrintLastLog no" | sudo tee /etc/ssh/sshd_config > /dev/null
 mkdir -p $HOME/.ssh && echo $PUBKEY > $HOME/.ssh/authorized_keys && chmod 700 $HOME/.ssh && chown -R $USERNAME $HOME/.ssh && chmod 400 $HOME/.ssh/authorized_keys
 echo "SSH Port: $RANDOM_PORT"
 
@@ -51,7 +54,7 @@ printf "\n\033[1m     \033[32m\"Bee\" careful    \033[34m__\n       \033[32mwith
 # Setup MOTD
 git clone --depth 1 https://github.com/bartobri/no-more-secrets /tmp/nms && sudo make -C /tmp/nms clean all install && sudo rm -rf /tmp/nms
 printf "clear && ((echo && printf \"   E N T E R   T H E   V O I D\n\"  && echo) | nms -af red) && cat /etc/motd" | sudo tee /etc/profile.d/motd.sh > /dev/null && sudo chmod +x /etc/profile.d/motd.sh
-sudo wget -O /etc/motd $GIT_URL/local/share/art/supernets.txt
+sudo wget -O /etc/motd https://raw.githubusercontent.com/acidvegas/void/master/local/share/art/supernets.txt
 
 # Setup Tmux
 mkdir -p $HOME/.config/tmux && wget -O $HOME/.config/tmux/tmux.conf $GIT_URL/config/tmux/tmux.conf

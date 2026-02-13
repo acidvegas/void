@@ -120,6 +120,16 @@ mntusb() {
 	sudo mount $1 /mnt -o uid=$(id -u),gid=$(id -g)
 }
 
+mkproxy() {
+	PROXY_USERNAME=$(rnd 10)
+	PROXY_PASSWORD=$(rnd 10)
+	PROXY_PORT=$(shuf -i 40000-65535 -n 1)
+	PROXY_IP=$(curl -s -4 https://maxmind.supernets.org | jq -rc .ip
+	docker stop proxy>/dev/null 2>&1 && docker rm proxy>/dev/null 2>&1
+	docker run -d --name proxy --restart unless-stopped -e PROXY_USER=$PROXY_USERNAME -e PROXY_PASSWORD=$PROXY_PASSWORD -e PROXY_PORT=$PROXY_PORT -p $PROXY_PORT:$PROXY_PORT serjs/go-socks5-proxy
+	echo "$PROXY_USERNAME:$PROXY_PASSWORD@$PROXY_IP:$PROXY_PORT"
+}
+
 qr() {
 	curl qrenco.de/$1
 }
