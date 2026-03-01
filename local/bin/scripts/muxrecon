@@ -1,0 +1,17 @@
+#!/bin/bash
+# muxrecon - developed by acidvegas (https://git.acid.vegas/void)
+
+# Find relevant hosts from SSH config
+hosts=($(grep -E "^Host havoc-(av|do)-" ~/.ssh/config.d/recon | awk '{print $2}'))
+
+# Open new window and connect to first host
+tmux new-window "ssh ${hosts[0]}"
+
+# Split windows and connect to remaining hosts
+for host in "${hosts[@]:1}"; do 
+    tmux split-window -d "ssh $host"
+    tmux select-layout tiled
+done
+
+# Synchronize panes
+tmux set-window-option synchronize-panes on
