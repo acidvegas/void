@@ -116,6 +116,16 @@ hf() {
 	curl -F file=@$1 https://hardfiles.org/ # yeah thats right motherfucker, real bay shit, for real bay motherfuckers.
 }
 
+irccat() {
+	# usage: irccat <server> <channel> [nick] [fifo_path]
+	s=$1 c=$2 n=${3:-IRC_FIFO} f=${4:-/tmp/irc_fifo}
+	[[ -p $f ]]||mkfifo $f
+	exec 3<>/dev/tcp/$s/6667
+	printf "NICK $n\r\nUSER $n 0 * :$n\r\n">&3
+	(while :;do while read m;do printf "PRIVMSG $c :%s\r\n" "$m">&3;sleep 1;done<$f;done)&
+	while read l<&3;do echo "$l";[[ $l == PING* ]]&&printf "%s\n" "${l/PING/PONG}">&3;[[ $l == *001* ]]&&{ sleep 5;printf "JOIN $c\r\n">&3;};done
+}
+
 mntusb() {
 	sudo mount $1 /mnt -o uid=$(id -u),gid=$(id -g)
 }
