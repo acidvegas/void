@@ -63,6 +63,16 @@ ip2int() {
     fi
 }
 
+iphist() {
+  r="$1"
+  [[ "$r" != */* ]] && r="$r/32"
+  echo "CURRENT:"
+  curl -s "https://stat.ripe.net/data/prefix-overview/data.json?resource=$r" | jq '.data'
+  echo
+  echo "HISTORY:"
+  curl -s "https://stat.ripe.net/data/routing-history/data.json?resource=$r" | jq '.data.by_origin'
+}
+
 nscan() {
 	target="$1"
 	[ -z "$target" ] && { echo 'usage: nscan <ip_or_range>' >&2; return 1; }
